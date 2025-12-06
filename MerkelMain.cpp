@@ -25,6 +25,7 @@ void MerkelMain::printMenu() {
 int MerkelMain::getUserOption() {
     int userOption;
     std::cout << "Type in 1-6" << std::endl;
+    std::cout << "===========" << std::endl;
     std::cin >> userOption;
     std::cout << "You chose: " << userOption << std::endl;
     return userOption;

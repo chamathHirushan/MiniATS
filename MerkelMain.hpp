@@ -2,6 +2,7 @@ class MerkelMain{
     public:
         MerkelMain();
         void init();
+    private:
         void printMenu();
         int getUserOption();
         void printHelp();
