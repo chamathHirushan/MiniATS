@@ -51,8 +51,7 @@ std::vector<OrderBookEntry> CSVReader::readCSV(const std::string& filename) {
         while(std::getline(csvFile, line)) {
             std::vector<std::string> tokens = extractTokens(line);
             try{
-                OrderBookEntry entry = parseLine(tokens);              
-                std::cout << "Parsed entry: Price = " << entry.price << ", Amount = " << entry.amount << std::endl;
+                OrderBookEntry entry = parseLine(tokens);
                 entries.push_back(entry);
             } catch(std::exception& e) {
                 std::cout << "Error parsing line. Skipping..." << e.what() << std::endl;
