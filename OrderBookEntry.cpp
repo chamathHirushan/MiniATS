@@ -1,4 +1,5 @@
 #include "OrderBookEntry.hpp"
+#include <stdexcept>
 
 OrderBookEntry:: OrderBookEntry(double price, 
                        double amount, 
@@ -19,6 +20,6 @@ OrderBookType OrderBookEntry::determineOrderType(const std::string& typeStr) {
     } else if (typeStr == "ask") {
         return OrderBookType::ask;
     } else {
-        return OrderBookType::unknown;
+        throw std::invalid_argument("Invalid order type string: " + typeStr);
     }
 }
