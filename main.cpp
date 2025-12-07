@@ -1,10 +1,11 @@
 #include "OrderBookEntry.hpp"
 #include "MerkelMain.hpp"
+#include "Extractor.hpp"
 
 int main() {
-    MerkelMain merkelApp;
-    merkelApp.init();
-
+    // MerkelMain merkelApp;
+    // merkelApp.init();
+    test();
     return 0;
 } 
 
