@@ -24,10 +24,19 @@ std::vector<std::string> extractWords(const std::string csvLine, char separator 
 
 void test(){
     std::ifstream csvFile{"20200317.csv"};
+    std::string line;
 
     if (!csvFile.is_open()) {
         std::cerr << "Could not open the file!" << std::endl;
         return;
     }
-    std::cout << "File opened successfully!" << std::endl;
+    while(std::getline(csvFile, line)) {
+        std::cout << "Read line: " << line << std::endl;
+        std::vector<std::string> words = extractWords(line);
+        for (const std::string& word : words) {
+            std::cout << word << " | ";
+        }
+        std::cout << std::endl;
+    }
+    csvFile.close();
 }
