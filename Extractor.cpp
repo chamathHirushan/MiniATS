@@ -2,8 +2,10 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include "extractor.hpp"
+#include "OrderBookEntry.hpp"
 
-std::vector<std::string> extractWords(const std::string csvLine, char separator = ',') {
+std::vector<std::string> extractTokens(const std::string& csvLine, char separator) {
     std::vector<std::string> tokens;
     signed int start, end;
     
@@ -32,11 +34,30 @@ void test(){
     }
     while(std::getline(csvFile, line)) {
         std::cout << "Read line: " << line << std::endl;
-        std::vector<std::string> words = extractWords(line);
-        for (const std::string& word : words) {
-            std::cout << word << " | ";
+        std::vector<std::string> words = extractTokens(line);
+        if (words.size() != 5) {
+            std::cout << "Invalid line. Skipping..." << std::endl;
+            continue;
         }
-        std::cout << std::endl;
+        
+        try{
+            std::string timestamp = words[0];
+            std::string product = words[1];
+            OrderBookType orderType = (words[2] == "bid") ? OrderBookType::bid : OrderBookType::ask;
+            double price = std::stod(words[3]);
+            double amount = std::stod(words[4]);
+
+            std::cout << "Parsed values:" << std::endl;
+            std::cout << "Price: " << price << std::endl;
+            std::cout << "Amount: " << amount << std::endl;
+            std::cout << "Timestamp: " << timestamp << std::endl;
+            std::cout << "Product: " << product << std::endl;
+            std::cout << "Order Type: " << ((orderType == OrderBookType::bid) ? "bid" : "ask") << std::endl;
+            std::cout << std::endl;
+        } catch (const std::exception& e) {
+            std::cout << "Error parsing line: " << e.what() << ". Skipping..." << std::endl;
+            continue;
+        }
     }
     csvFile.close();
 }
