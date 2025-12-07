@@ -12,3 +12,13 @@ OrderBookEntry:: OrderBookEntry(double price,
             this->product = product;
             this->orderType = orderType;
         }
+
+OrderBookType OrderBookEntry::determineOrderType(const std::string& typeStr) {
+    if (typeStr == "bid") {
+        return OrderBookType::bid;
+    } else if (typeStr == "ask") {
+        return OrderBookType::ask;
+    } else {
+        return OrderBookType::unknown;
+    }
+}

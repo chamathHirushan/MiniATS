@@ -1,11 +1,14 @@
 #include "OrderBookEntry.hpp"
 #include "MerkelMain.hpp"
-#include "Extractor.hpp"
+#include "CSVReader.hpp"
+#include <iostream>
 
 int main() {
     // MerkelMain merkelApp;
     // merkelApp.init();
-    test();
+    std::vector<OrderBookEntry> entries = CSVReader::readCSV("20200317.csv");
+    std::cout << "Read " << entries.size() << " entries\n";
+
     return 0;
 } 
 
