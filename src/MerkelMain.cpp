@@ -6,6 +6,7 @@ MerkelMain::MerkelMain() {
 }
 
 void MerkelMain::init() {
+    currentTimestamp = orderBook.getEarliestTimestamp();
     while (true) {
         printMenu();
         int userOption = getUserOption();
@@ -21,6 +22,7 @@ void MerkelMain::printMenu() {
     std::cout << "4: Place a bid" << std::endl;
     std::cout << "5: Print wallet" << std::endl;
     std::cout << "6: Continue" << std::endl;
+    std::cout<< "Current time is : " << currentTimestamp << std::endl;
 };
 
 int MerkelMain::getUserOption() {

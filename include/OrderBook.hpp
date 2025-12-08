@@ -14,6 +14,8 @@ class OrderBook {
 
         static double getHighPrice(const std::vector<OrderBookEntry>& orders);
         static double getLowPrice(const std::vector<OrderBookEntry>& orders);
+
+        std::string getEarliestTimestamp();
     private:
         std::vector<OrderBookEntry> orders;
 };
