@@ -1,23 +1,16 @@
 #include "MerkelMain.hpp"
 #include <iostream>
 #include "OrderBookEntry.hpp"
-#include "CSVReader.hpp"
 
 MerkelMain::MerkelMain() {
 }
 
 void MerkelMain::init() {
-    loadOrderBook();
     while (true) {
         printMenu();
         int userOption = getUserOption();
         processUserOption(userOption);
     }
-};
-
-void MerkelMain::loadOrderBook() {
-    std::cout << "Loading order book..." << std::endl;
-    entries = CSVReader::readCSV("20200317.csv");
 };
 
 void MerkelMain::printMenu() {
@@ -43,19 +36,24 @@ void MerkelMain::printHelp() {
     std::cout << "Help - choose options from the menu" << std::endl;
     std::cout << "and follow the on screen instructions." << std::endl;
 };
-
+    
 void MerkelMain::printMarketStats() {
-    std::cout << "OrderBook contains : " << entries.size() << " entries." << std::endl;
-    unsigned int bid =0;
-    unsigned int ask =0;
-    for (const OrderBookEntry& e : entries) {
-        if (e.orderType == OrderBookType::bid) {
-            bid++;
-        } else if (e.orderType == OrderBookType::ask) {
-            ask++;
-        }
+
+    for (const std::string& product : orderBook.getKnownProducts()) {
+        std::cout << "Product: " << product << std::endl;
+        // Here you would typically gather and print statistics for each product
     }
-    std::cout << "Bids: " << bid << ", Asks: " << ask << std::endl;
+    // std::cout << "OrderBook contains : " << orderBook.entries.size() << " entries." << std::endl;
+    // unsigned int bid =0;
+    // unsigned int ask =0;
+    // for (const OrderBookEntry& e : entries) {
+    //     if (e.orderType == OrderBookType::bid) {
+    //         bid++;
+    //     } else if (e.orderType == OrderBookType::ask) {
+    //         ask++;
+    //     }
+    // }
+    // std::cout << "Bids: " << bid << ", Asks: " << ask << std::endl;
 };
 
 void MerkelMain::enterAsk() {

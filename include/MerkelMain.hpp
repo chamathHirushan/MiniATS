@@ -1,13 +1,11 @@
 #pragma once
-#include <vector>
-#include "OrderBookEntry.hpp"
+#include "OrderBook.hpp"
 
 class MerkelMain{
     public:
         MerkelMain();
         void init();
     private:
-        void loadOrderBook();
         void printMenu();
         int getUserOption();
         void printHelp();
@@ -18,5 +16,5 @@ class MerkelMain{
         void gotoNextTimeframe();
         void processUserOption(int userOption);
 
-        std::vector<OrderBookEntry> entries;
+        OrderBook orderBook{"20200317.csv"};
 };
