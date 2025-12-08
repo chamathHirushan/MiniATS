@@ -11,6 +11,9 @@ class OrderBook {
         std::vector<std::string> getKnownProducts();
         /** return all orders of specified type, product, and timestamp */
         std::vector<OrderBookEntry> getOrders(OrderBookType type, const std::string& product, const std::string& timestamp);
+
+        static double getHighPrice(const std::vector<OrderBookEntry>& orders);
+        static double getLowPrice(const std::vector<OrderBookEntry>& orders);
     private:
         std::vector<OrderBookEntry> orders;
 };

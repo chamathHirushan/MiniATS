@@ -24,7 +24,32 @@ std::vector<std::string> OrderBook::getKnownProducts() {
 
 std::vector<OrderBookEntry> OrderBook::getOrders(OrderBookType type, const std::string& product, const std::string& timestamp) {
     // Implementation to filter entries based on type, product, and timestamp
-    std::vector<OrderBookEntry> filteredEntries;
-    // Logic to populate filteredEntries vector
-    return filteredEntries;
+    std::vector<OrderBookEntry> filteredOrders;
+    for (const OrderBookEntry& entry : orders) {
+        if (entry.orderType == type && entry.product == product && entry.timestamp == timestamp) {
+            filteredOrders.push_back(entry);
+        }
+    }
+
+    return filteredOrders;
+}
+
+double OrderBook::getHighPrice(const std::vector<OrderBookEntry>& orders) {
+    double max = orders[0].price;
+    for (const OrderBookEntry& e : orders) {
+        if (e.price > max) {
+            max = e.price;
+        }
+    }
+    return max;
+}
+
+double OrderBook::getLowPrice(const std::vector<OrderBookEntry>& orders) {
+    double min = orders[0].price;
+    for (const OrderBookEntry& e : orders) {
+        if (e.price < min) {
+            min = e.price;
+        }
+    }
+    return min;
 }
