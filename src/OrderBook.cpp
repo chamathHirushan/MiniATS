@@ -59,12 +59,13 @@ double OrderBook::getLowPrice(const std::vector<OrderBookEntry>& orders) {
 double OrderBook::getAvgPrice(const std::vector<OrderBookEntry>& orders) {
     double total = 0.0;
     int count = 0;
+    double totalVolume = 0.0;
     for (const OrderBookEntry& entry : orders) {
-        total += entry.price;
-        count++;
+        total += entry.price * entry.amount;
+        totalVolume += entry.amount;
     }
-    if (count == 0) return 0.0;
-    return total / count;
+    if (totalVolume == 0) return 0.0;
+    return total / totalVolume;
 }
 
 double OrderBook::getTotalVolume(const std::vector<OrderBookEntry>& orders) {
