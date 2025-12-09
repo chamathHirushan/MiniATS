@@ -1,4 +1,4 @@
-# MiniATS
+# MiniATS Crypto
 
 ## Compilation
 
