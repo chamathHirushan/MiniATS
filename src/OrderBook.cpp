@@ -64,7 +64,7 @@ double OrderBook::getAvgPrice(const std::vector<OrderBookEntry>& orders) {
         total += entry.price * entry.amount;
         totalVolume += entry.amount;
     }
-    if (totalVolume == 0) return 0.0;
+    if (totalVolume == 0.0) return 0.0;
     return total / totalVolume;
 }
 
