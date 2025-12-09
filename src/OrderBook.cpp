@@ -35,6 +35,7 @@ std::vector<OrderBookEntry> OrderBook::getOrders(OrderBookType type, const std::
 }
 
 double OrderBook::getHighPrice(const std::vector<OrderBookEntry>& orders) {
+    if (orders.empty()) return 0.0;
     double max = orders[0].price;
     for (const OrderBookEntry& e : orders) {
         if (e.price > max) {
@@ -45,6 +46,7 @@ double OrderBook::getHighPrice(const std::vector<OrderBookEntry>& orders) {
 }
 
 double OrderBook::getLowPrice(const std::vector<OrderBookEntry>& orders) {
+    if (orders.empty()) return 0.0;
     double min = orders[0].price;
     for (const OrderBookEntry& e : orders) {
         if (e.price < min) {
