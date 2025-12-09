@@ -3,12 +3,14 @@
 #include "OrderBookEntry.hpp"
 #include "CSVReader.hpp"
 #include <limits>
+#include "Wallet.hpp"
 
 MerkelMain::MerkelMain() {
 }
 
 void MerkelMain::init() {
     currentTimestamp = orderBook.getEarliestTimestamp();
+    wallet.insertCurrency("BTC", 10.0);
     while (true) {
         printMenu();
         int userOption = getUserOption();
@@ -103,7 +105,7 @@ void MerkelMain::enterBid() {
 };
 
 void MerkelMain::printWallet() {
-    std::cout << "You selected: Print wallet" << std::endl;
+    std::cout << wallet.toString() << std::endl;
 };
 
 void MerkelMain::gotoNextTimeframe() {

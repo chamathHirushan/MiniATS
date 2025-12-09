@@ -1,5 +1,6 @@
 #pragma once
 #include "OrderBook.hpp"
+#include "Wallet.hpp"
 
 class MerkelMain{
     public:
@@ -16,6 +17,7 @@ class MerkelMain{
         void gotoNextTimeframe();
         void processUserOption(int userOption);
 
-        OrderBook orderBook{"test.csv"};
+        OrderBook orderBook{"20200317.csv"};
+        Wallet wallet;
         std::string currentTimestamp;
 };
