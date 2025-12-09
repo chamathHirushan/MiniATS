@@ -30,4 +30,5 @@ class OrderBook {
 
     private:
         std::vector<OrderBookEntry> orders;
+        std::vector<OrderBookEntry> finalizedSales;
 };

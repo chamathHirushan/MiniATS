@@ -148,5 +148,6 @@ std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std:
             }
         }
     }
+    finalizedSales.insert(finalizedSales.end(), sales.begin(), sales.end());
     return sales;
 }
