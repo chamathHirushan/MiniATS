@@ -23,3 +23,15 @@ OrderBookType OrderBookEntry::determineOrderType(const std::string& typeStr) {
         throw std::invalid_argument("Invalid order type string: " + typeStr);
     }
 }
+
+bool OrderBookEntry::compareByTimestamp(const OrderBookEntry& a, const OrderBookEntry& b) {
+    return a.timestamp < b.timestamp;
+}
+
+bool OrderBookEntry::compareByPriceAsc(const OrderBookEntry& a, const OrderBookEntry& b) {
+    return a.price < b.price;
+}
+
+bool OrderBookEntry::compareByPriceDesc(const OrderBookEntry& a, const OrderBookEntry& b) {
+    return a.price > b.price;
+}

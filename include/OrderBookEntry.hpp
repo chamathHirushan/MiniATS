@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-enum class OrderBookType {bid, ask, unknown};
+enum class OrderBookType {bid, ask, sale};
 
 class OrderBookEntry {
     public:
@@ -18,4 +18,7 @@ class OrderBookEntry {
                        OrderBookType orderType);
 
         static OrderBookType determineOrderType(const std::string& typeStr);
+        static bool compareByTimestamp(const OrderBookEntry& a, const OrderBookEntry& b);
+        static bool compareByPriceAsc(const OrderBookEntry& a, const OrderBookEntry& b);
+        static bool compareByPriceDesc(const OrderBookEntry& a, const OrderBookEntry& b);
 };

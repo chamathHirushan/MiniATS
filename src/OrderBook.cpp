@@ -105,5 +105,48 @@ std::string OrderBook::getNextTimestamp(const std::string& timestamp) {
 
 void OrderBook::insertOrder(const OrderBookEntry& order) {
     orders.push_back(order);
-    std::sort(orders.begin(), orders.end(), compareByTimestamp);
+    std::sort(orders.begin(), orders.end(), OrderBookEntry::compareByTimestamp);
+}
+
+std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std::string currentTimestamp) {
+
+    std::vector<OrderBookEntry> bids = getOrders(OrderBookType::bid, product, currentTimestamp);
+    std::vector<OrderBookEntry> asks = getOrders(OrderBookType::ask, product, currentTimestamp);
+
+    std::vector<OrderBookEntry> sales;
+
+    std::sort(asks.begin(), asks.end(), OrderBookEntry::compareByPriceAsc);
+    std::sort(bids.begin(), bids.end(), OrderBookEntry::compareByPriceDesc);
+
+    for (OrderBookEntry& ask : asks){
+        for (OrderBookEntry& bid : bids){
+
+            if (bid.price >= ask.price) { //we have a match
+                OrderBookEntry sale(ask.price, 0.0, currentTimestamp, product, OrderBookType::sale);
+                
+                if (bid.amount == ask.amount) { //bid completely clears ask
+                    sale.amount = ask.amount;
+                    sales.push_back(sale);
+                    bid.amount = 0.0; //make sure the bid is not processed again
+                    ask.amount = 0.0;
+                    break; //can do no more with this ask, go onto the next ask
+                }
+                else if (bid.amount > ask.amount) { //ask is completely gone slice the bid
+                    sale.amount = ask.amount;
+                    sales.push_back(sale);
+                    bid.amount -= ask.amount; //we adjust the bid in place so it can be used to process the next ask
+                    ask.amount = 0.0;
+                    break; //ask is completely gone, so go to next ask
+                }
+                else if (bid.amount < ask.amount) { //bid is completely gone, slice the ask
+                    sale.amount = bid.amount;
+                    sales.push_back(sale);
+                    ask.amount -= bid.amount; //update the ask and allow further bids to process the remaining amount
+                    bid.amount = 0.0; //make sure the bid is not processed again
+                    continue; //some ask remains so go to the next bid
+                }
+            }
+        }
+    }
+    return sales;
 }

@@ -22,13 +22,12 @@ class OrderBook {
         std::string getEarliestTimestamp();
         /** returns the next timestamp after the input */
         std::string getNextTimestamp(const std::string& timestamp);
+
         /** insert a new order into the order book */
         void insertOrder(const OrderBookEntry& order);
+        /** match asks to bids and return a list of sales */
+        std::vector<OrderBookEntry> matchAsksToBids(std::string product, std::string currentTimestamp);
 
     private:
         std::vector<OrderBookEntry> orders;
-
-        static bool compareByTimestamp(const OrderBookEntry& a, const OrderBookEntry& b) {
-            return a.timestamp < b.timestamp;
-        }
 };
