@@ -16,6 +16,6 @@ class MerkelMain{
         void gotoNextTimeframe();
         void processUserOption(int userOption);
 
-        OrderBook orderBook{"20200317.csv"};
+        OrderBook orderBook{"test.csv"};
         std::string currentTimestamp;
 };
