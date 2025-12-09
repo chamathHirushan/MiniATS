@@ -1,6 +1,8 @@
 #include "MerkelMain.hpp"
 #include <iostream>
 #include "OrderBookEntry.hpp"
+#include "CSVReader.hpp"
+#include <limits>
 
 MerkelMain::MerkelMain() {
 }
@@ -9,8 +11,14 @@ void MerkelMain::init() {
     currentTimestamp = orderBook.getEarliestTimestamp();
     while (true) {
         printMenu();
-        int userOption = getUserOption();
-        processUserOption(userOption);
+        try{
+            int userOption = getUserOption();
+            processUserOption(userOption);
+        } catch (const std::exception& e) {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << e.what() << " Please try again." << std::endl;
+        }
     }
 };
 
@@ -60,8 +68,15 @@ void MerkelMain::printMarketStats() {
 void MerkelMain::enterAsk() {
     std::cout << "Place an ask, enter - product, price, amount  eg: ETH/BTC,100.5,2" << std::endl;
     std::string askOffer;
-    std::cin.ignore();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::getline(std::cin, askOffer);
+
+    std::vector<std::string> tokens = CSVReader::extractTokens(askOffer, ',');
+    if (tokens.size() != 3) {
+        std::cout << "Invalid ask format. Please use product,price,amount" << std::endl;
+        return;
+    }
+    OrderBookEntry newAsk = CSVReader::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::ask);
     std::cout << "You entered: " << askOffer << std::endl;
 
 };
@@ -69,8 +84,15 @@ void MerkelMain::enterAsk() {
 void MerkelMain::enterBid() {
     std::cout << "Place a bid, enter - product, price, amount   eg: ETH/BTC,100.5,2" << std::endl;
     std::string bidOffer;
-    std::cin.ignore();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::getline(std::cin, bidOffer);
+
+    std::vector<std::string> tokens = CSVReader::extractTokens(bidOffer, ',');
+    if (tokens.size() != 3) {
+        std::cout << "Invalid bid format. Please use product,price,amount" << std::endl;
+        return;
+    }
+    OrderBookEntry newBid = CSVReader::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::bid);
     std::cout << "You entered: " << bidOffer << std::endl;
 
 };
@@ -111,6 +133,7 @@ void MerkelMain::processUserOption(int userOption) {
             break;
         default:
             std::cout << "Invalid choice. Please enter a number between 1 and 6." << std::endl;
+            throw std::invalid_argument("Invalid menu option");
             break;
     }
 };

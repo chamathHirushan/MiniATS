@@ -25,6 +25,18 @@ std::vector<std::string> CSVReader::extractTokens(const std::string& csvLine, ch
     return tokens;
 }
 
+OrderBookEntry CSVReader::parseLine(std::string price, std::string amount, std::string timestamp, std::string product, OrderBookType orderType) {
+    try{   
+        double priceValue = std::stod(price);
+        double amountValue = std::stod(amount);
+        OrderBookEntry entry{priceValue, amountValue, timestamp, product, orderType};
+        return entry;
+    } catch (const std::exception& e) {
+        std::cout << "Invalid price or amount format. Skipping..." << std::endl;
+        throw;
+    }
+}
+
 OrderBookEntry CSVReader::parseLine(const std::vector<std::string>& tokens) {
     if (tokens.size() != 5) {
         std::cout << "Invalid line. Skipping..." << std::endl;
@@ -37,7 +49,7 @@ OrderBookEntry CSVReader::parseLine(const std::vector<std::string>& tokens) {
     double price = std::stod(tokens[3]);
     double amount = std::stod(tokens[4]);
 
-    OrderBookEntry entry(price, amount, timestamp, product, orderType);
+    OrderBookEntry entry{price, amount, timestamp, product, orderType};
     return entry;
 }
 
