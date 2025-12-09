@@ -56,6 +56,25 @@ double OrderBook::getLowPrice(const std::vector<OrderBookEntry>& orders) {
     return min;
 }
 
+double OrderBook::getAvgPrice(const std::vector<OrderBookEntry>& orders) {
+    double total = 0.0;
+    int count = 0;
+    for (const OrderBookEntry& entry : orders) {
+        total += entry.price;
+        count++;
+    }
+    if (count == 0) return 0.0;
+    return total / count;
+}
+
+double OrderBook::getTotalVolume(const std::vector<OrderBookEntry>& orders) {
+    double totalVolume = 0.0;
+    for (const OrderBookEntry& entry : orders) {
+            totalVolume += entry.amount;
+        }
+    return totalVolume;
+}
+
 std::string OrderBook::getEarliestTimestamp() {
     if (orders.empty()) {
         return "";

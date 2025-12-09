@@ -46,9 +46,14 @@ void MerkelMain::printMarketStats() {
         std::vector<OrderBookEntry> bids = orderBook.getOrders(OrderBookType::bid, product, currentTimestamp);
         std::cout<< "  Bids: " << bids.size() << std::endl;
         std::cout << "  High Bid: " << OrderBook::getHighPrice(bids) << std::endl;
+        std::cout << "  Avg Bid Price: " << OrderBook::getAvgPrice(bids) << std::endl;
+        std::cout << "  Total Bid Volume: " << OrderBook::getTotalVolume(bids) <<  std::endl;
+        
         std::vector<OrderBookEntry> asks = orderBook.getOrders(OrderBookType::ask, product, currentTimestamp);
         std::cout<< "  Asks: " << asks.size() << std::endl;
         std::cout << "  Low Ask: " << OrderBook::getLowPrice(asks) << std::endl;
+        std::cout << "  Avg Ask Price: " << OrderBook::getAvgPrice(asks) << std::endl;
+        std::cout << "  Total Ask Volume: " << OrderBook::getTotalVolume(asks) << std::endl;
     }
     // std::cout << "OrderBook contains : " << orderBook.entries.size() << " entries." << std::endl;
     // unsigned int bid =0;
