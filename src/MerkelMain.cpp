@@ -77,6 +77,7 @@ void MerkelMain::enterAsk() {
     }
     try{
         OrderBookEntry newAsk = CSVReader::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::ask);
+        newAsk.username = "SimUser";
         if (wallet.canFulfillOrder(newAsk)) {
             orderBook.insertOrder(newAsk);
             std::cout << "You entered: " << askOffer << std::endl;
@@ -101,6 +102,7 @@ void MerkelMain::enterBid() {
     }
     try{
         OrderBookEntry newBid = CSVReader::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::bid);
+        newBid.username = "SimUser";
         if (wallet.canFulfillOrder(newBid)) {
             orderBook.insertOrder(newBid);
             std::cout << "You entered: " << bidOffer << std::endl;

@@ -119,10 +119,24 @@ std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std:
     std::sort(bids.begin(), bids.end(), OrderBookEntry::compareByPriceDesc);
 
     for (OrderBookEntry& ask : asks){
+        if (ask.amount <= 0.0) {
+            continue; //ask already completely filled
+        }
         for (OrderBookEntry& bid : bids){
+            if (bid.amount <= 0.0) {
+                continue; //bid already completely filled
+            }
 
             if (bid.price >= ask.price) { //we have a match
-                OrderBookEntry sale(ask.price, 0.0, currentTimestamp, product, OrderBookType::sale);
+
+                OrderBookType type = OrderBookType::asksale; // to identify which side the sale is from
+                std::string username = ask.username;
+                if (bid.username != "dataset") {
+                    std::string username = bid.username;
+                    type = OrderBookType::bidsale;
+                }
+
+                OrderBookEntry sale{ask.price, 0.0, currentTimestamp, product, type, username};
                 
                 if (bid.amount == ask.amount) { //bid completely clears ask
                     sale.amount = ask.amount;
