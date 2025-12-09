@@ -55,25 +55,24 @@ void MerkelMain::printMarketStats() {
         std::cout << "  Avg Ask Price: " << OrderBook::getAvgPrice(asks) << std::endl;
         std::cout << "  Total Ask Volume: " << OrderBook::getTotalVolume(asks) << std::endl;
     }
-    // std::cout << "OrderBook contains : " << orderBook.entries.size() << " entries." << std::endl;
-    // unsigned int bid =0;
-    // unsigned int ask =0;
-    // for (const OrderBookEntry& e : entries) {
-    //     if (e.orderType == OrderBookType::bid) {
-    //         bid++;
-    //     } else if (e.orderType == OrderBookType::ask) {
-    //         ask++;
-    //     }
-    // }
-    // std::cout << "Bids: " << bid << ", Asks: " << ask << std::endl;
 };
 
 void MerkelMain::enterAsk() {
-    std::cout << "You selected: Place an ask" << std::endl;
+    std::cout << "Place an ask, enter - product, price, amount  eg: ETH/BTC,100.5,2" << std::endl;
+    std::string askOffer;
+    std::cin.ignore();
+    std::getline(std::cin, askOffer);
+    std::cout << "You entered: " << askOffer << std::endl;
+
 };
 
 void MerkelMain::enterBid() {
-    std::cout << "You selected: Place a bid" << std::endl;
+    std::cout << "Place a bid, enter - product, price, amount   eg: ETH/BTC,100.5,2" << std::endl;
+    std::string bidOffer;
+    std::cin.ignore();
+    std::getline(std::cin, bidOffer);
+    std::cout << "You entered: " << bidOffer << std::endl;
+
 };
 
 void MerkelMain::printWallet() {
