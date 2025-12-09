@@ -49,3 +49,21 @@ bool Wallet::canFulfillOrder(OrderBookEntry& order) {
     }
     return false;
 }
+
+void Wallet::processSale(OrderBookEntry& sale) {
+    std::vector<std::string> tokens = CSVReader::extractTokens(sale.product, '/');
+    if (tokens.size() != 2) {
+        throw std::invalid_argument("Invalid product format in sale");
+    }
+    
+    if (sale.orderType == OrderBookType::asksale) {
+        // Seller side
+        removeCurrency(tokens[0], sale.amount); // remove the sold currency
+        insertCurrency(tokens[1], sale.amount * sale.price); // add the received currency
+    } else if (sale.orderType == OrderBookType::bidsale) {
+        // Buyer side
+        double totalCost = sale.amount * sale.price;
+        removeCurrency(tokens[1], totalCost); // remove the spent currency
+        insertCurrency(tokens[0], sale.amount); // add the purchased currency
+    }
+}

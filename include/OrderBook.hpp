@@ -28,7 +28,8 @@ class OrderBook {
         /** match asks to bids and return a list of sales */
         std::vector<OrderBookEntry> matchAsksToBids(std::string product, std::string currentTimestamp);
 
+        std::vector<OrderBookEntry> finalizedSales;
+
     private:
         std::vector<OrderBookEntry> orders;
-        std::vector<OrderBookEntry> finalizedSales;
 };

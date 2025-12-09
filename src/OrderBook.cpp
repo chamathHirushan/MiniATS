@@ -4,6 +4,7 @@
 #include "CSVReader.hpp"
 #include <map>
 #include <algorithm>
+#include <iostream>
 
 OrderBook::OrderBook(const std::string& filename) {
     // Load entries from the CSV file
@@ -132,7 +133,7 @@ std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std:
                 OrderBookType type = OrderBookType::asksale; // to identify which side the sale is from
                 std::string username = ask.username;
                 if (bid.username != "dataset") {
-                    std::string username = bid.username;
+                    username = bid.username;
                     type = OrderBookType::bidsale;
                 }
 

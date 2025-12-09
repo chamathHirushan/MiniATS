@@ -121,11 +121,21 @@ void MerkelMain::printWallet() {
 void MerkelMain::gotoNextTimeframe() {
     std::cout << "You selected: Continue" << std::endl;
     std::string nextTimestamp = orderBook.getNextTimestamp(currentTimestamp);
-    std::vector<OrderBookEntry> newSales = orderBook.matchAsksToBids("ETH/BTC", currentTimestamp);
-    for (const OrderBookEntry& sale : newSales) {
-        std::cout << "Sale: " << sale.product << " Price: " << sale.price << " Amount: " << sale.amount << std::endl;
+
+    for (const std::string& product : orderBook.getKnownProducts()) {
+        std::cout << "Matching orders for product: " << product << " at time: " << currentTimestamp << std::endl;
+        std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp);
+
+        for (OrderBookEntry& sale : matchedSales) {
+            std::cout << "Sale: " << sale.product << " Price: " << sale.price << " Amount: " << sale.amount << std::endl;
+            // std::cout << "  Buyer: " << sale.username << std::endl;
+            if (sale.username != "dataset"){
+                    wallet.processSale(sale);
+            }
+        }
     }
-    std::cout<<"Total new sales: " << newSales.size() << std::endl;
+    std::cout<<"Total new sales: " << orderBook.finalizedSales.size() << std::endl;
+
     if (nextTimestamp != "") {
         currentTimestamp = nextTimestamp;
     } else {
