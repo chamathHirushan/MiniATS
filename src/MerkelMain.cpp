@@ -77,8 +77,12 @@ void MerkelMain::enterAsk() {
     }
     try{
         OrderBookEntry newAsk = CSVReader::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::ask);
-        orderBook.insertOrder(newAsk);
-        std::cout << "You entered: " << askOffer << std::endl;
+        if (wallet.canFulfillOrder(newAsk)) {
+            orderBook.insertOrder(newAsk);
+            std::cout << "You entered: " << askOffer << std::endl;
+        } else {
+            std::cout << "Insufficient funds in wallet to place this ask." << std::endl;
+        }
     } catch (const std::exception& e) {
         std::cout << "Bad ask format. Please use product,price,amount" << std::endl;
     }
@@ -97,8 +101,12 @@ void MerkelMain::enterBid() {
     }
     try{
         OrderBookEntry newBid = CSVReader::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::bid);
-        orderBook.insertOrder(newBid);
-        std::cout << "You entered: " << bidOffer << std::endl;
+        if (wallet.canFulfillOrder(newBid)) {
+            orderBook.insertOrder(newBid);
+            std::cout << "You entered: " << bidOffer << std::endl;
+        } else {
+            std::cout << "Insufficient funds in wallet to place this bid." << std::endl;
+        }
     } catch (const std::exception& e) {
         std::cout << "Bad bid format. Please use product,price,amount" << std::endl;
     }
