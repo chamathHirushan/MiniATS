@@ -3,6 +3,7 @@
 #include <string>
 #include "CSVReader.hpp"
 #include <map>
+#include <algorithm>
 
 OrderBook::OrderBook(const std::string& filename) {
     // Load entries from the CSV file
@@ -100,4 +101,9 @@ std::string OrderBook::getNextTimestamp(const std::string& timestamp) {
         }
     }
     return nextTimestamp;
+}
+
+void OrderBook::insertOrder(const OrderBookEntry& order) {
+    orders.push_back(order);
+    std::sort(orders.begin(), orders.end(), compareByTimestamp);
 }
