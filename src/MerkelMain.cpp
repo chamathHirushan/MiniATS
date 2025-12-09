@@ -11,14 +11,8 @@ void MerkelMain::init() {
     currentTimestamp = orderBook.getEarliestTimestamp();
     while (true) {
         printMenu();
-        try{
-            int userOption = getUserOption();
-            processUserOption(userOption);
-        } catch (const std::exception& e) {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cout << e.what() << " Please try again." << std::endl;
-        }
+        int userOption = getUserOption();
+        processUserOption(userOption);
     }
 };
 
@@ -34,11 +28,16 @@ void MerkelMain::printMenu() {
 };
 
 int MerkelMain::getUserOption() {
-    int userOption;
+    std::string line;
     std::cout << "Type in 1-6" << std::endl;
     std::cout << "===========" << std::endl;
-    std::cin >> userOption;
-    return userOption;
+    std::getline(std::cin, line);
+    try{
+        int userOption = std::stoi(line);
+        return userOption;
+    } catch (const std::exception& e) {
+        return 0;
+    }
 };
 
 void MerkelMain::printHelp() {
@@ -67,7 +66,6 @@ void MerkelMain::printMarketStats() {
 void MerkelMain::enterAsk() {
     std::cout << "Place an ask, enter - product, price, amount  eg: ETH/BTC,100.5,2" << std::endl;
     std::string askOffer;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::getline(std::cin, askOffer);
 
     std::vector<std::string> tokens = CSVReader::extractTokens(askOffer, ',');
@@ -75,15 +73,18 @@ void MerkelMain::enterAsk() {
         std::cout << "Invalid ask format. Please use product,price,amount" << std::endl;
         return;
     }
-    OrderBookEntry newAsk = CSVReader::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::ask);
-    std::cout << "You entered: " << askOffer << std::endl;
+    try{
+        OrderBookEntry newAsk = CSVReader::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::ask);
+        std::cout << "You entered: " << askOffer << std::endl;
+    } catch (const std::exception& e) {
+        std::cout << "Bad ask format. Please use product,price,amount" << std::endl;
+    }
 
 };
 
 void MerkelMain::enterBid() {
     std::cout << "Place a bid, enter - product, price, amount   eg: ETH/BTC,100.5,2" << std::endl;
     std::string bidOffer;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::getline(std::cin, bidOffer);
 
     std::vector<std::string> tokens = CSVReader::extractTokens(bidOffer, ',');
@@ -91,9 +92,12 @@ void MerkelMain::enterBid() {
         std::cout << "Invalid bid format. Please use product,price,amount" << std::endl;
         return;
     }
-    OrderBookEntry newBid = CSVReader::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::bid);
-    std::cout << "You entered: " << bidOffer << std::endl;
-
+    try{
+        OrderBookEntry newBid = CSVReader::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::bid);
+        std::cout << "You entered: " << bidOffer << std::endl;
+    } catch (const std::exception& e) {
+        std::cout << "Bad bid format. Please use product,price,amount" << std::endl;
+    }
 };
 
 void MerkelMain::printWallet() {
@@ -132,7 +136,6 @@ void MerkelMain::processUserOption(int userOption) {
             break;
         default:
             std::cout << "Invalid choice. Please enter a number between 1 and 6." << std::endl;
-            throw std::invalid_argument("Invalid menu option");
             break;
     }
 };

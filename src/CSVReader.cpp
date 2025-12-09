@@ -32,14 +32,12 @@ OrderBookEntry CSVReader::parseLine(std::string price, std::string amount, std::
         OrderBookEntry entry{priceValue, amountValue, timestamp, product, orderType};
         return entry;
     } catch (const std::exception& e) {
-        std::cout << "Invalid price or amount format. Skipping..." << std::endl;
         throw;
     }
 }
 
 OrderBookEntry CSVReader::parseLine(const std::vector<std::string>& tokens) {
     if (tokens.size() != 5) {
-        std::cout << "Invalid line. Skipping..." << std::endl;
         throw std::exception{};
     }
 
