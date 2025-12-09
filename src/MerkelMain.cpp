@@ -77,6 +77,12 @@ void MerkelMain::printWallet() {
 
 void MerkelMain::gotoNextTimeframe() {
     std::cout << "You selected: Continue" << std::endl;
+    std::string nextTimestamp = orderBook.getNextTimestamp(currentTimestamp);
+    if (nextTimestamp != "") {
+        currentTimestamp = nextTimestamp;
+    } else {
+        std::cout << "No more data available. Staying at current timestamp." << std::endl;
+    }
 };
 
 void MerkelMain::processUserOption(int userOption) {
