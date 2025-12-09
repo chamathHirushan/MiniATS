@@ -28,6 +28,7 @@ g++ -std=c++17 src/*.cpp -I include -o build/app
                 sale.amount = ask.amount
                 sales.append(sale)
                 bid.amount = 0 # make sure the bid is not processed again
+                ask.amount = 0
                 # can do no more with this ask
                 # go onto the next ask
                 break
@@ -37,6 +38,7 @@ g++ -std=c++17 src/*.cpp -I include -o build/app
                 # we adjust the bid in place
                 # so it can be used to process the next ask
                 bid.amount = bid.amount- ask.amount
+                ask.amount = 0
                 # ask is completely gone, so go to next ask
                 break
             if bid.amount < ask.amount # bid is completely gone, slice the ask
