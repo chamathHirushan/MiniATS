@@ -22,12 +22,7 @@ make all
 
 Feel free to edit the `Makefile` to address any cross-platform issues.
 
-## Trading System Protocol Design
-- **Encoding**: 
-- **Delimiter**: All messages must end with a newline character `\n`.
-- **Arguments**: Separated by spaces.
-
-### Client -> Server Commands
+## Client -> Server Commands
 
 1. **Login:**  
     Use `LOGIN <username>` to identify yourself to the server.
@@ -48,7 +43,7 @@ Feel free to edit the `Makefile` to address any cross-platform issues.
 
 ---
 
-### Server -> Client Responses
+## Server -> Client Responses
 
 - Successful actions return `OK` followed by a message, like `OK Order placed id:123`.
 - Errors are sent as `ERR <reason>`, for example, `ERR Insufficient funds`.
