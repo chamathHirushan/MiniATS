@@ -19,8 +19,17 @@ To compile the project using `g++`, use the following command:
 ```bash
 make all
 ```
-
 Feel free to edit the `Makefile` to address any cross-platform issues.
+
+### Running the Server and Clients
+
+Start the server and any number of clients using the following commands:
+
+```bash
+build/server
+
+build/client
+```
 
 ## Client -> Server Commands
 
