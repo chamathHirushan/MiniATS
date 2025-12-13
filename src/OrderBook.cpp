@@ -12,6 +12,7 @@ OrderBook::OrderBook(const std::string& filename) {
 }
 
 std::vector<std::string> OrderBook::getKnownProducts() {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex); //TODO 
     // Implementation to extract known products from entries
     std::vector<std::string> products;
     std::map<std::string, bool> productMap;
@@ -25,6 +26,7 @@ std::vector<std::string> OrderBook::getKnownProducts() {
 }
 
 std::vector<OrderBookEntry> OrderBook::getOrders(OrderBookType type, const std::string& product, const std::string& timestamp) {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex); //this might be removed if not for finalizedSales, it makes things slower
     // Implementation to filter entries based on type, product, and timestamp
     std::vector<OrderBookEntry> filteredOrders;
     for (const OrderBookEntry& entry : orders) {
@@ -79,6 +81,7 @@ double OrderBook::getTotalVolume(const std::vector<OrderBookEntry>& orders) {
 }
 
 std::string OrderBook::getEarliestTimestamp() {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
     if (orders.empty()) {
         return "";
     }
@@ -93,6 +96,7 @@ std::string OrderBook::getEarliestTimestamp() {
 }
 
 std::string OrderBook::getNextTimestamp(const std::string& timestamp) {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
     std::string nextTimestamp = "";
     for (const OrderBookEntry& e : orders) {
         if (e.timestamp > timestamp) {
@@ -105,12 +109,12 @@ std::string OrderBook::getNextTimestamp(const std::string& timestamp) {
 }
 
 void OrderBook::insertOrder(const OrderBookEntry& order) {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
     orders.push_back(order);
     std::sort(orders.begin(), orders.end(), OrderBookEntry::compareByTimestamp);
 }
 
 std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std::string currentTimestamp) {
-
     std::vector<OrderBookEntry> bids = getOrders(OrderBookType::bid, product, currentTimestamp);
     std::vector<OrderBookEntry> asks = getOrders(OrderBookType::ask, product, currentTimestamp);
 

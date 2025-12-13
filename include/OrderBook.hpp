@@ -2,6 +2,7 @@
 #include "OrderBookEntry.hpp"
 #include <vector>
 #include <string>
+#include <mutex>
 
 class OrderBook {
     public:
@@ -32,4 +33,5 @@ class OrderBook {
 
     private:
         std::vector<OrderBookEntry> orders;
+        mutable std::recursive_mutex ordersMutex; // Mutex lock to protect the orders,finalizedSales when multiple threads access
 };
