@@ -34,8 +34,7 @@ Feel free to edit the `Makefile` to address any cross-platform issues.
 
 2. **Place Orders:**  
     - To sell, use `ASK <product> <amount> <price>`.  
-        <sub>Example: <code>ASK BTC/USD 0.5 50000</code>  
-        (The server adds a timestamp automatically.)</sub>
+        <sub>Example: <code>ASK BTC/USD 0.5 50000</code> (The server adds a timestamp automatically.)</sub>
     - To buy, use `BID <product> <amount> <price>`.  
         <sub>Example: <code>BID BTC/USD 0.5 49000</code></sub>
 
