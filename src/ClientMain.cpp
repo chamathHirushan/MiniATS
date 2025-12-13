@@ -12,11 +12,11 @@ void ClientMain::init() {
 void ClientMain::run() {
     try {
         // Resolve server address and port
-        tcp::resolver resolver(io_context);
+        tcp::resolver resolver{io_context};
         auto endpoints = resolver.resolve("localhost", "5322");
         
         // Create socket and connect to server
-        tcp::socket socket(io_context);
+        tcp::socket socket{io_context};
         asio::connect(socket, endpoints);
 
         std::cout << "Connected to server!" << std::endl;
