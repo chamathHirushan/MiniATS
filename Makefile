@@ -16,19 +16,19 @@ else
 endif
 
 # Source files
-SERVER_SRCS := $(SRC_DIR)/server_app.cpp \
-               $(SRC_DIR)/ServerMain.cpp \
-               $(SRC_DIR)/OrderBook.cpp \
-               $(SRC_DIR)/OrderBookEntry.cpp \
-               $(SRC_DIR)/Wallet.cpp \
-               $(SRC_DIR)/CSVReader.cpp
+SERVER_SRCS := $(SRC_DIR)/server/server_app.cpp \
+               $(SRC_DIR)/server/ServerMain.cpp \
+               $(SRC_DIR)/server/OrderBook.cpp \
+               $(SRC_DIR)/server/OrderBookEntry.cpp \
+               $(SRC_DIR)/server/Wallet.cpp \
+               $(SRC_DIR)/server/CSVReader.cpp
 
-CLIENT_SRCS := $(SRC_DIR)/client_app.cpp \
-               $(SRC_DIR)/ClientMain.cpp
+CLIENT_SRCS := $(SRC_DIR)/client/client_app.cpp \
+               $(SRC_DIR)/client/ClientMain.cpp
 
 # Object files
-SERVER_OBJS := $(SERVER_SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
-CLIENT_OBJS := $(CLIENT_SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+SERVER_OBJS := $(patsubst $(SRC_DIR)/server/%.cpp,$(BUILD_DIR)/server_%.o,$(SERVER_SRCS))
+CLIENT_OBJS := $(patsubst $(SRC_DIR)/client/%.cpp,$(BUILD_DIR)/client_%.o,$(CLIENT_SRCS))
 
 # Executables
 SERVER_EXE := $(BUILD_DIR)/server$(EXE_EXT)
@@ -41,7 +41,11 @@ all: directories $(SERVER_EXE) $(CLIENT_EXE)
 
 # Create build directory
 directories:
+ifeq ($(OS),Windows_NT)
+	@if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
+else
 	@mkdir -p $(BUILD_DIR)
+endif
 
 # Linking server
 $(SERVER_EXE): $(SERVER_OBJS)
@@ -53,12 +57,20 @@ $(CLIENT_EXE): $(CLIENT_OBJS)
 	@echo "Linking Client..."
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-# Compile .cpp to .o
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@echo "Compiling $<..."
+# Compile server .cpp to .o
+$(BUILD_DIR)/server_%.o: $(SRC_DIR)/server/%.cpp
+	@echo "Compiling server $<..."
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+# Compile client .cpp to .o
+$(BUILD_DIR)/client_%.o: $(SRC_DIR)/client/%.cpp
+	@echo "Compiling client $<..."
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 # Clean build artifacts
 clean:
-	@echo "Cleaning build directory..."
-	rm -rf $(BUILD_DIR)
+ifeq ($(OS),Windows_NT)
+	@rmdir /s /q $(BUILD_DIR)
+else
+	@rm -rf $(BUILD_DIR)
+endif
