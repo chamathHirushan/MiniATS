@@ -2,22 +2,22 @@
 CXX      := g++
 CXXFLAGS := -std=c++17 -Iinclude -Iexternal/asio/include
 
-#directories
+# Directories
 BUILD_DIR := build
 SRC_DIR   := src
 
-# # Detect OS for linking flags and executable extension
-# ifeq ($(OS),Windows_NT)
-#     LDFLAGS := -lws2_32
-#     EXE_EXT := .exe
-#     MKDIR_CMD := if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
-#     RMDIR_CMD := rmdir /s /q $(BUILD_DIR)
-# else
-#     LDFLAGS :=
-#     EXE_EXT :=
-#     MKDIR_CMD := mkdir -p $(BUILD_DIR)
-#     RMDIR_CMD := rm -rf $(BUILD_DIR)
-# endif
+# Detect OS for linking flags and executable extension
+ifeq ($(OS),Windows_NT)
+    LDFLAGS := -lws2_32
+    EXE_EXT := .exe
+    MKDIR_CMD := if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
+    RMDIR_CMD := rmdir /s /q $(BUILD_DIR)
+else
+    LDFLAGS :=
+    EXE_EXT :=
+    MKDIR_CMD := mkdir -p $(BUILD_DIR)
+    RMDIR_CMD := rm -rf $(BUILD_DIR)
+endif
 
 # Source files
 SERVER_SRCS := $(SRC_DIR)/server/server_app.cpp \
@@ -43,9 +43,9 @@ CLIENT_EXE := $(BUILD_DIR)/client$(EXE_EXT)
 # Default target
 all: directories $(SERVER_EXE) $(CLIENT_EXE)
 
-# # Create build directory
-# directories:
-# 	@$(MKDIR_CMD)
+# Create build directory
+directories:
+	@$(MKDIR_CMD)
 
 # Linking server
 $(SERVER_EXE): $(SERVER_OBJS)
@@ -67,7 +67,7 @@ $(BUILD_DIR)/client_%.o: $(SRC_DIR)/client/%.cpp
 	@echo "Compiling client $<..."
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-# # Clean build artifacts
-# clean:
-# 	@echo "Cleaning build directory..."
-# 	@$(RMDIR_CMD)
+# Clean build artifacts
+clean:
+	@echo "Cleaning build directory..."
+	@$(RMDIR_CMD)
