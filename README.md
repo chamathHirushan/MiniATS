@@ -30,15 +30,14 @@ Feel free to edit the `Makefile` to address any cross-platform issues.
 ### Client -> Server Commands
 
 1. **Login:**  
-    Use `LOGIN <username>` to identify yourself to the server.  
-    Example: `LOGIN user1`
+    Use `LOGIN <username>` to identify yourself to the server.
 
 2. **Place Orders:**  
     - To sell, use `ASK <product> <amount> <price>`.  
-        Example: `ASK BTC/USD 0.5 50000`  
-                (The server adds a timestamp automatically.)
+        <sub>Example: <code>ASK BTC/USD 0.5 50000</code>  
+        (The server adds a timestamp automatically.)</sub>
     - To buy, use `BID <product> <amount> <price>`.  
-        Example: `BID BTC/USD 0.5 49000`
+        <sub>Example: <code>BID BTC/USD 0.5 49000</code></sub>
 
 3. **Get Information:**  
     - Check your wallet with `WALLET`.
