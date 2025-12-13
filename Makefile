@@ -20,11 +20,11 @@ SERVER_SRCS := $(SRC_DIR)/server/server_app.cpp \
                $(SRC_DIR)/server/ServerMain.cpp \
                $(SRC_DIR)/server/OrderBook.cpp \
                $(SRC_DIR)/server/OrderBookEntry.cpp \
-               $(SRC_DIR)/server/CSVReader.cpp
+               $(SRC_DIR)/server/CSVReader.cpp \
+			   $(SRC_DIR)/client/Wallet.cpp
 
 CLIENT_SRCS := $(SRC_DIR)/client/client_app.cpp \
-               $(SRC_DIR)/client/ClientMain.cpp \
-			   $(SRC_DIR)/client/Wallet.cpp
+               $(SRC_DIR)/client/ClientMain.cpp
 
 # Object files
 SERVER_OBJS := $(patsubst $(SRC_DIR)/server/%.cpp,$(BUILD_DIR)/server_%.o,$(SERVER_SRCS))
