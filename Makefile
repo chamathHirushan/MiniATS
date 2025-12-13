@@ -2,19 +2,18 @@
 CXX      := g++
 CXXFLAGS := -std=c++17 -Iinclude -Iexternal/asio/include
 
+# Build directories
+BUILD_DIR := build
+SRC_DIR   := src
+
 # Detect OS for linking flags and executable extension
 ifeq ($(OS),Windows_NT)
     LDFLAGS := -lws2_32
     EXE_EXT := .exe
-    MKDIR := mkdir $(BUILD_DIR)
 else
     LDFLAGS :=
     EXE_EXT :=
-    MKDIR := mkdir -p $(BUILD_DIR)
 endif
-
-BUILD_DIR := build
-SRC_DIR   := src
 
 # Source files
 SERVER_SRCS := $(SRC_DIR)/server_app.cpp \
@@ -42,7 +41,7 @@ all: directories $(SERVER_EXE) $(CLIENT_EXE)
 
 # Create build directory
 directories:
-	@$(MKDIR)
+	@mkdir -p $(BUILD_DIR)
 
 # Linking server
 $(SERVER_EXE): $(SERVER_OBJS)
