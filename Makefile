@@ -10,9 +10,13 @@ SRC_DIR   := src
 ifeq ($(OS),Windows_NT)
     LDFLAGS := -lws2_32
     EXE_EXT := .exe
+    MKDIR_CMD := if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
+    RMDIR_CMD := rmdir /s /q $(BUILD_DIR)
 else
     LDFLAGS :=
     EXE_EXT :=
+    MKDIR_CMD := mkdir -p $(BUILD_DIR)
+    RMDIR_CMD := rm -rf $(BUILD_DIR)
 endif
 
 # Source files
@@ -21,7 +25,7 @@ SERVER_SRCS := $(SRC_DIR)/server/server_app.cpp \
                $(SRC_DIR)/server/OrderBook.cpp \
                $(SRC_DIR)/server/OrderBookEntry.cpp \
                $(SRC_DIR)/server/CSVReader.cpp \
-			   $(SRC_DIR)/server/Wallet.cpp
+               $(SRC_DIR)/server/Wallet.cpp
 
 CLIENT_SRCS := $(SRC_DIR)/client/client_app.cpp \
                $(SRC_DIR)/client/ClientMain.cpp
@@ -41,11 +45,7 @@ all: directories $(SERVER_EXE) $(CLIENT_EXE)
 
 # Create build directory
 directories:
-ifeq ($(OS),Windows_NT)
-	@if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
-else
-	@mkdir -p $(BUILD_DIR)
-endif
+	@$(MKDIR_CMD)
 
 # Linking server
 $(SERVER_EXE): $(SERVER_OBJS)
@@ -69,8 +69,5 @@ $(BUILD_DIR)/client_%.o: $(SRC_DIR)/client/%.cpp
 
 # Clean build artifacts
 clean:
-ifeq ($(OS),Windows_NT)
-	@rmdir /s /q $(BUILD_DIR)
-else
-	@rm -rf $(BUILD_DIR)
-endif
+	@echo "Cleaning build directory..."
+	@$(RMDIR_CMD)
