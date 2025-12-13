@@ -35,16 +35,15 @@ Feel free to edit the `Makefile` to address any cross-platform issues.
 
 2. **Place Orders:**  
     - To sell, use `ASK <product> <amount> <price>`.  
-      Example: `ASK BTC/USD 0.5 50000`  
-      (The server adds a timestamp automatically.)
+        Example: `ASK BTC/USD 0.5 50000`  
+                (The server adds a timestamp automatically.)
     - To buy, use `BID <product> <amount> <price>`.  
-      Example: `BID BTC/USD 0.5 49000`
+        Example: `BID BTC/USD 0.5 49000`
 
 3. **Get Information:**  
-    - Check your wallet with `WALLET`.  
-      Example: `WALLET`
-    - View market stats using `MARKET`.  
-      Example: `MARKET`
+    - Check your wallet with `WALLET`.
+    - View market stats using `MARKET`.
+    - View commands `HELP`.
 
 4. **Disconnect:**  
     Use `EXIT` to log out from the server.
