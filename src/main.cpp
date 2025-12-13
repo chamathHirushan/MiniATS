@@ -1,7 +1,7 @@
 #include "OrderBookEntry.hpp"
 #include "MerkelMain.hpp"
 
-int main() {
+int main2() {
     MerkelMain merkelApp;
     merkelApp.init();
     
