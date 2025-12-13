@@ -27,7 +27,7 @@ bool Wallet::containsAmmount(std::string type, double amount) {
     return currencies[type] >= amount;
 }
 
-std::string Wallet::toString() {
+std::string Wallet::toString() const {
     std::string result = "Wallet contents:\n";
     for (const auto& pair : currencies) {
         result += pair.first + ": " + std::to_string(pair.second) + "\n";
