@@ -23,53 +23,39 @@ make all
 Feel free to edit the `Makefile` to address any cross-platform issues.
 
 ## Trading System Protocol Design
-- **Encoding**: ASCII / UTF-8
+- **Encoding**: 
 - **Delimiter**: All messages must end with a newline character `\n`.
 - **Arguments**: Separated by spaces.
 
-## Client -> Server Commands
+### Client -> Server Commands
 
-### 1. Connection & Session
-*   **Command**: `LOGIN <username>`
-*   **Description**: Identifies the client.
-*   **Example**: `LOGIN user1`
+1. **Login:**  
+    Use `LOGIN <username>` to identify yourself to the server.  
+    Example: `LOGIN user1`
 
-### 2. Trading
-*   **Command**: `ASK <product> <amount> <price>`
-*   **Description**: Places a sell order.
-*   **Example**: `ASK BTC/USD 0.5 50000`
-    *   *Note*: Timestamp will be assigned by the server.
+2. **Place Orders:**  
+    - To sell, use `ASK <product> <amount> <price>`.  
+      Example: `ASK BTC/USD 0.5 50000`  
+      (The server adds a timestamp automatically.)
+    - To buy, use `BID <product> <amount> <price>`.  
+      Example: `BID BTC/USD 0.5 49000`
 
-*   **Command**: `BID <product> <amount> <price>`
-*   **Description**: Places a buy order.
-*   **Example**: `BID BTC/USD 0.5 49000`
+3. **Get Information:**  
+    - Check your wallet with `WALLET`.  
+      Example: `WALLET`
+    - View market stats using `MARKET`.  
+      Example: `MARKET`
 
-### 3. Information
-*   **Command**: `WALLET`
-*   **Description**: Request current wallet balance.
-*   **Example**: `WALLET`
+4. **Disconnect:**  
+    Use `EXIT` to log out from the server.
 
-*   **Command**: `MARKET`
-*   **Description**: Request current market statistics (high/low/volume).
-*   **Example**: `MARKET`
+---
 
-### 4. System
-*   **Command**: `EXIT`
-*   **Description**: Disconnects the client.
+### Server -> Client Responses
 
-## Server -> Client Responses
-
-### Success
-*   **Format**: `OK <optional_message>`
-*   **Example**: `OK Order placed id:123`
-
-### Error
-*   **Format**: `ERR <reason>`
-*   **Example**: `ERR Insufficient funds`
-
-### Data Response (for WALLET/MARKET)
-*   **Format**: `DATA <payload>`
-*   **Example**: `DATA BTC:10.5,USD:500.0`
+- Successful actions return `OK` followed by a message, like `OK Order placed id:123`.
+- Errors are sent as `ERR <reason>`, for example, `ERR Insufficient funds`.
+- Data requests (like wallet or market info) respond with `DATA <payload>`, such as `DATA BTC:10.5,USD:500.0`.
 
 
 ## Matching Algorithm
