@@ -1,11 +1,11 @@
 #include <string>
 #include <vector>
 #include "OrderBookEntry.hpp"
-#include "CSVReader.hpp"
+#include "CSVHandler.hpp"
 #include <iostream>
 #include <fstream>
 
-std::vector<std::string> CSVReader::extractTokens(const std::string& csvLine, char separator=',') {
+std::vector<std::string> CSVHandler::extractTokens(const std::string& csvLine, char separator=',') {
     // Implementation for extracting tokens from a CSV line
     std::vector<std::string> tokens;
     signed int start, end;
@@ -25,7 +25,7 @@ std::vector<std::string> CSVReader::extractTokens(const std::string& csvLine, ch
     return tokens;
 }
 
-OrderBookEntry CSVReader::parseLine(std::string price, std::string amount, std::string timestamp, std::string product, OrderBookType orderType) {
+OrderBookEntry CSVHandler::parseLine(std::string price, std::string amount, std::string timestamp, std::string product, OrderBookType orderType) {
     try{   
         double priceValue = std::stod(price);
         double amountValue = std::stod(amount);
@@ -36,7 +36,7 @@ OrderBookEntry CSVReader::parseLine(std::string price, std::string amount, std::
     }
 }
 
-OrderBookEntry CSVReader::parseLine(const std::vector<std::string>& tokens) {
+OrderBookEntry CSVHandler::parseLine(const std::vector<std::string>& tokens) {
     if (tokens.size() != 5) {
         throw std::exception{};
     }
@@ -51,7 +51,7 @@ OrderBookEntry CSVReader::parseLine(const std::vector<std::string>& tokens) {
     return entry;
 }
 
-std::vector<OrderBookEntry> CSVReader::readCSV(const std::string& filename) {
+std::vector<OrderBookEntry> CSVHandler::readCSV(const std::string& filename) {
     std::vector<OrderBookEntry> entries;
     // Implementation for reading CSV file and populating entries
     std::ifstream csvFile{filename};

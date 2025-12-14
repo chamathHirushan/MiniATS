@@ -1,6 +1,6 @@
 #include "Wallet.hpp"
 #include <stdexcept>
-#include "CSVReader.hpp"
+#include "CSVHandler.hpp"
 
 void Wallet::insertCurrency(std::string type, double amount) {
     if (amount < 0) {
@@ -36,7 +36,7 @@ std::string Wallet::toString() {
 }
 
 bool Wallet::canFulfillOrder(OrderBookEntry& order) {
-    std::vector<std::string> tokens = CSVReader::extractTokens(order.product, '/');
+    std::vector<std::string> tokens = CSVHandler::extractTokens(order.product, '/');
     if (tokens.size() != 2) {
         throw std::invalid_argument("Invalid product format in order");
     }
@@ -51,7 +51,7 @@ bool Wallet::canFulfillOrder(OrderBookEntry& order) {
 }
 
 void Wallet::processSale(OrderBookEntry& sale) {
-    std::vector<std::string> tokens = CSVReader::extractTokens(sale.product, '/');
+    std::vector<std::string> tokens = CSVHandler::extractTokens(sale.product, '/');
     if (tokens.size() != 2) {
         throw std::invalid_argument("Invalid product format in sale");
     }

@@ -1,7 +1,7 @@
 #include "MerkelMain.hpp"
 #include <iostream>
 #include "OrderBookEntry.hpp"
-#include "CSVReader.hpp"
+#include "CSVHandler.hpp"
 #include <limits>
 #include "Wallet.hpp"
 
@@ -70,13 +70,13 @@ void MerkelMain::enterAsk() {
     std::string askOffer;
     std::getline(std::cin, askOffer);
 
-    std::vector<std::string> tokens = CSVReader::extractTokens(askOffer, ',');
+    std::vector<std::string> tokens = CSVHandler::extractTokens(askOffer, ',');
     if (tokens.size() != 3) {
         std::cout << "Invalid ask format. Please use product,price,amount" << std::endl;
         return;
     }
     try{
-        OrderBookEntry newAsk = CSVReader::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::ask);
+        OrderBookEntry newAsk = CSVHandler::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::ask);
         newAsk.username = "SimUser";
         if (wallet.canFulfillOrder(newAsk)) {
             orderBook.insertOrder(newAsk);
@@ -95,13 +95,13 @@ void MerkelMain::enterBid() {
     std::string bidOffer;
     std::getline(std::cin, bidOffer);
 
-    std::vector<std::string> tokens = CSVReader::extractTokens(bidOffer, ',');
+    std::vector<std::string> tokens = CSVHandler::extractTokens(bidOffer, ',');
     if (tokens.size() != 3) {
         std::cout << "Invalid bid format. Please use product,price,amount" << std::endl;
         return;
     }
     try{
-        OrderBookEntry newBid = CSVReader::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::bid);
+        OrderBookEntry newBid = CSVHandler::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::bid);
         newBid.username = "SimUser";
         if (wallet.canFulfillOrder(newBid)) {
             orderBook.insertOrder(newBid);
