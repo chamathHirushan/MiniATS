@@ -26,7 +26,7 @@ std::vector<std::string> OrderBook::getKnownProducts() {
 }
 
 std::vector<OrderBookEntry> OrderBook::getOrders(OrderBookType type, const std::string& product, const std::string& timestamp) {
-    std::lock_guard<std::recursive_mutex> lock(ordersMutex); //this might be removed if not for finalizedSales, it makes things slower
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
     // Implementation to filter entries based on type, product, and timestamp
     std::vector<OrderBookEntry> filteredOrders;
     for (const OrderBookEntry& entry : orders) {
@@ -122,6 +122,7 @@ std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std:
 
     std::sort(asks.begin(), asks.end(), OrderBookEntry::compareByPriceAsc);
     std::sort(bids.begin(), bids.end(), OrderBookEntry::compareByPriceDesc);
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex); //this might be removed if not for finalizedSales, it makes things slower
 
     for (OrderBookEntry& ask : asks){
         if (ask.amount <= 0.0) {
