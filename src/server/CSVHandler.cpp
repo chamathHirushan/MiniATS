@@ -73,3 +73,19 @@ std::vector<OrderBookEntry> CSVHandler::readCSV(const std::string& filename) {
 
     return entries;
 }
+
+void CSVHandler::appendEntriesToCSV(const std::string& filename, const std::vector<OrderBookEntry>& entries) {
+    std::ofstream csvFile{filename, std::ios::app};
+    if (!csvFile.is_open()) {
+        std::cerr << "Error opening file for appending: " << filename << std::endl;
+        return;
+    }
+    for (const OrderBookEntry& entry : entries) {
+        csvFile << entry.timestamp << ','
+                << entry.product << ','
+                << OrderBookEntry::orderTypeToString(entry.orderType) << ','
+                << entry.price << ','
+                << entry.amount << '\n';
+    }
+    csvFile.close();
+}

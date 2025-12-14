@@ -26,6 +26,16 @@ OrderBookType OrderBookEntry::determineOrderType(const std::string& typeStr) {
     }
 }
 
+std::string OrderBookEntry::orderTypeToString(const OrderBookType& type) {
+    switch(type) {
+        case OrderBookType::bid: return "bid";
+        case OrderBookType::ask: return "ask";
+        case OrderBookType::asksale: return "asksale";
+        case OrderBookType::bidsale: return "bidsale";
+        default: return "unknown";
+    }
+}
+
 bool OrderBookEntry::compareByTimestamp(const OrderBookEntry& a, const OrderBookEntry& b) {
     return a.timestamp < b.timestamp;
 }

@@ -28,6 +28,8 @@ class OrderBook {
         void insertOrder(const OrderBookEntry& order);
         /** insert new sales into the finalized sales book */
         void insertSales(std::vector<OrderBookEntry>& sales);
+        std::vector<OrderBookEntry> getSales();
+        
         /** match asks to bids and return a list of sales */
         std::vector<OrderBookEntry> matchAsksToBids(std::string product, std::string currentTimestamp);
 

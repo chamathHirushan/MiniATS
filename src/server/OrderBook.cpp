@@ -119,6 +119,11 @@ void OrderBook::insertSales(std::vector<OrderBookEntry>& sales) {
     finalizedSales.insert(finalizedSales.end(), sales.begin(), sales.end());
 }
 
+std::vector<OrderBookEntry> OrderBook::getSales() {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
+    return finalizedSales;
+}
+
 std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std::string currentTimestamp) {
     std::vector<OrderBookEntry*> bids = getOrders(OrderBookType::bid, product);
     std::vector<OrderBookEntry*> asks = getOrders(OrderBookType::ask, product);

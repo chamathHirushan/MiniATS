@@ -4,11 +4,34 @@
 #include <vector>
 #include <thread>
 #include <ctime>
+#include <csignal>
+#include "CSVHandler.hpp"
+
+ServerMain* ServerMain::serverInstance = nullptr; // Global pointer to current instance
+
+void ServerMain::cleanup(int signum) {
+    std::cout << "\nShutting down server..." << std::endl;
+    if (serverInstance != nullptr) {
+        
+        CSVHandler::appendEntriesToCSV("sales.csv", serverInstance->orderBook.getSales());
+        std::cout << "Exported records successfully." << std::endl;
+
+        serverInstance->isRunning = false;
+        if (serverInstance->acceptor) {
+            serverInstance->acceptor->close();
+        }
+        serverInstance->io_context.stop();
+    }
+    std::exit(signum);
+}
 
 void ServerMain::init() {
     std::cout << "ServerMain::init() starting..." << std::endl;
-    //currentTimestamp = orderBook.getEarliestTimestamp(); 
-    wallet.insertCurrency("BTC", 10.0); 
+    serverInstance = this;
+    std::signal(SIGINT, ServerMain::cleanup); // Handle Ctrl+C
+    std::signal(SIGTERM, ServerMain::cleanup); // Handle termination signal
+    
+    wallet.insertCurrency("BTC", 10.0);
     
     try {
         // Create and bind the TCP acceptor to listen on port 5322 (IPv4) for incoming client connections
@@ -40,7 +63,9 @@ void ServerMain::run() {
             // Detach the thread so it runs independently; the server can continue accepting other clients
             clientThread.detach();
         } catch (std::exception& e) {
-            std::cerr << "Exception in run: " << e.what() << std::endl;
+            if (isRunning) {
+                std::cerr << "Exception in run: " << e.what() << std::endl;
+            }
         }
     }
 }
