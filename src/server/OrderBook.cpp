@@ -114,6 +114,11 @@ void OrderBook::insertOrder(const OrderBookEntry& order) {
     std::sort(orders.begin(), orders.end(), OrderBookEntry::compareByTimestamp);
 }
 
+void OrderBook::insertSales(std::vector<OrderBookEntry>& sales) {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
+    finalizedSales.insert(finalizedSales.end(), sales.begin(), sales.end());
+}
+
 std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std::string currentTimestamp) {
     std::vector<OrderBookEntry*> bids = getOrders(OrderBookType::bid, product);
     std::vector<OrderBookEntry*> asks = getOrders(OrderBookType::ask, product);
@@ -163,7 +168,6 @@ std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std:
             }
         }
     }
-    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-    finalizedSales.insert(finalizedSales.end(), sales.begin(), sales.end());
+    insertSales(sales);
     return sales;
 }

@@ -162,18 +162,20 @@ void ServerMain::startMatching() {
         if (!isRunning) break;
         currentTimestamp = getCurrentTimestamp();
         products = orderBook.getKnownProducts();
+        int executedMatches = 0;
 
         for (const std::string& product : products) {
             std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp);
-
-            for (OrderBookEntry& sale : matchedSales) {
-                std::cout << "Sale: " << sale.product << " Price: " << sale.price << " Amount: " << sale.amount << std::endl;
-                // std::cout << "  Buyer: " << sale.username << std::endl;
-                if (sale.username != "dataset"){
-                        wallet.processSale(sale);
-                }
-            }
+            executedMatches += matchedSales.size();
+            // for (OrderBookEntry& sale : matchedSales) {
+            //     std::cout << "Sale: " << sale.product << " Price: " << sale.price << " Amount: " << sale.amount << std::endl;
+            //     // std::cout << "  Buyer: " << sale.username << std::endl;
+            //     if (sale.username != "dataset"){
+            //             wallet.processSale(sale);
+            //     }
+            // }
         }
+        std::cout << "Matching engine executed " << executedMatches << " matches at " << currentTimestamp << std::endl;
     }
 }
 

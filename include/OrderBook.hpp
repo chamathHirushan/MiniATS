@@ -26,12 +26,13 @@ class OrderBook {
 
         /** insert a new order into the order book */
         void insertOrder(const OrderBookEntry& order);
+        /** insert new sales into the finalized sales book */
+        void insertSales(std::vector<OrderBookEntry>& sales);
         /** match asks to bids and return a list of sales */
         std::vector<OrderBookEntry> matchAsksToBids(std::string product, std::string currentTimestamp);
 
-        std::vector<OrderBookEntry> finalizedSales;
-
     private:
+        std::vector<OrderBookEntry> finalizedSales;
         std::vector<OrderBookEntry> orders;
         mutable std::recursive_mutex ordersMutex; // Mutex lock to protect the orders,finalizedSales when multiple threads access
 };
