@@ -74,8 +74,8 @@ std::vector<OrderBookEntry> CSVHandler::readCSV(const std::string& filename) {
     return entries;
 }
 
-void CSVHandler::appendEntriesToCSV(const std::string& filename, const std::vector<OrderBookEntry>& entries) {
-    std::ofstream csvFile{filename, std::ios::app};
+void CSVHandler::entriesToCSV(const std::string& filename, const std::vector<OrderBookEntry>& entries, bool append) {
+    std::ofstream csvFile{filename, append ? std::ios::app : std::ios::trunc};
     if (!csvFile.is_open()) {
         std::cerr << "Error opening file for appending: " << filename << std::endl;
         return;

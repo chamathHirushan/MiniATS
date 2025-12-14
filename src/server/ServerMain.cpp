@@ -12,8 +12,9 @@ ServerMain* ServerMain::serverInstance = nullptr; // Global pointer to current i
 void ServerMain::cleanup(int signum) {
     std::cout << "\nShutting down server..." << std::endl;
     if (serverInstance != nullptr) {
-        
-        CSVHandler::appendEntriesToCSV("sales.csv", serverInstance->orderBook.getSales());
+
+        CSVHandler::entriesToCSV("sales.csv", serverInstance->orderBook.getSales());
+        CSVHandler::entriesToCSV(serverInstance->orderBook.getFilename(), serverInstance->orderBook.getOrders(), false);
         std::cout << "Exported records successfully." << std::endl;
 
         serverInstance->isRunning = false;

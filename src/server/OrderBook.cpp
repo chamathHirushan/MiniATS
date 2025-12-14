@@ -9,6 +9,7 @@
 OrderBook::OrderBook(const std::string& filename) {
     // Load entries from the CSV file
     orders = CSVHandler::readCSV(filename);
+    this->filename = filename;
 }
 
 std::vector<std::string> OrderBook::getKnownProducts() {
@@ -114,6 +115,11 @@ void OrderBook::insertOrder(const OrderBookEntry& order) {
     std::sort(orders.begin(), orders.end(), OrderBookEntry::compareByTimestamp);
 }
 
+std::vector<OrderBookEntry> OrderBook::getOrders() {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
+    return orders;
+}
+
 void OrderBook::insertSales(std::vector<OrderBookEntry>& sales) {
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
     finalizedSales.insert(finalizedSales.end(), sales.begin(), sales.end());
@@ -122,6 +128,10 @@ void OrderBook::insertSales(std::vector<OrderBookEntry>& sales) {
 std::vector<OrderBookEntry> OrderBook::getSales() {
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
     return finalizedSales;
+}
+
+std::string OrderBook::getFilename() const {
+    return filename;
 }
 
 std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std::string currentTimestamp) {

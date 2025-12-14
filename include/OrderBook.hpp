@@ -23,9 +23,11 @@ class OrderBook {
         std::string getEarliestTimestamp();
         /** returns the next timestamp after the input */
         std::string getNextTimestamp(const std::string& timestamp);
+        std::string getFilename() const;
 
         /** insert a new order into the order book */
         void insertOrder(const OrderBookEntry& order);
+        std::vector<OrderBookEntry> getOrders();
         /** insert new sales into the finalized sales book */
         void insertSales(std::vector<OrderBookEntry>& sales);
         std::vector<OrderBookEntry> getSales();
@@ -34,6 +36,7 @@ class OrderBook {
         std::vector<OrderBookEntry> matchAsksToBids(std::string product, std::string currentTimestamp);
 
     private:
+        std::string filename;
         std::vector<OrderBookEntry> finalizedSales;
         std::vector<OrderBookEntry> orders;
         mutable std::recursive_mutex ordersMutex; // Mutex lock to protect the orders,finalizedSales when multiple threads access
