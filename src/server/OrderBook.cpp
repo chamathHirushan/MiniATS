@@ -25,13 +25,13 @@ std::vector<std::string> OrderBook::getKnownProducts() {
     return products;
 }
 
-std::vector<OrderBookEntry> OrderBook::getOrders(OrderBookType type, const std::string& product, const std::string& timestamp) {
+std::vector<OrderBookEntry*> OrderBook::getOrders(OrderBookType type, const std::string& product) {
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-    // Implementation to filter entries based on type, product, and timestamp
-    std::vector<OrderBookEntry> filteredOrders;
-    for (const OrderBookEntry& entry : orders) {
-        if (entry.orderType == type && entry.product == product && entry.timestamp == timestamp) {
-            filteredOrders.push_back(entry);
+    // Implementation to filter entries based on type, product
+    std::vector<OrderBookEntry*> filteredOrders;
+    for (OrderBookEntry& entry : orders) {
+        if (entry.orderType == type && entry.product == product) {
+            filteredOrders.push_back(&entry);
         }
     }
 
@@ -115,59 +115,55 @@ void OrderBook::insertOrder(const OrderBookEntry& order) {
 }
 
 std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std::string currentTimestamp) {
-    std::vector<OrderBookEntry> bids = getOrders(OrderBookType::bid, product, currentTimestamp);
-    std::vector<OrderBookEntry> asks = getOrders(OrderBookType::ask, product, currentTimestamp);
+    std::vector<OrderBookEntry*> bids = getOrders(OrderBookType::bid, product);
+    std::vector<OrderBookEntry*> asks = getOrders(OrderBookType::ask, product);
 
     std::vector<OrderBookEntry> sales;
 
     std::sort(asks.begin(), asks.end(), OrderBookEntry::compareByPriceAsc);
     std::sort(bids.begin(), bids.end(), OrderBookEntry::compareByPriceDesc);
-    std::lock_guard<std::recursive_mutex> lock(ordersMutex); //this might be removed if not for finalizedSales, it makes things slower
 
-    for (OrderBookEntry& ask : asks){
-        if (ask.amount <= 0.0) {
+    for (OrderBookEntry* ask : asks){
+        if (ask->amount <= 0.0) {
             continue; //ask already completely filled
         }
-        for (OrderBookEntry& bid : bids){
-            if (bid.amount <= 0.0) {
+        for (OrderBookEntry* bid : bids){
+            if (bid->amount <= 0.0) {
                 continue; //bid already completely filled
             }
 
-            if (bid.price >= ask.price) { //we have a match
+            if (bid->price >= ask->price) { //we have a match
 
-                OrderBookType type = OrderBookType::asksale; // to identify which side the sale is from
-                std::string username = ask.username;
-                if (bid.username != "dataset") {
-                    username = bid.username;
+                OrderBookType type = OrderBookType::asksale;
+                std::string username = ask->username;
+                if (bid->username != "dataset") {
+                    username = bid->username;
                     type = OrderBookType::bidsale;
                 }
-
-                OrderBookEntry sale{ask.price, 0.0, currentTimestamp, product, type, username};
-                
-                if (bid.amount == ask.amount) { //bid completely clears ask
-                    sale.amount = ask.amount;
+                OrderBookEntry sale{ask->price, 0.0, currentTimestamp, product, type, username};
+                if (bid->amount == ask->amount) { //bid completely clears ask
+                    sale.amount = ask->amount;
                     sales.push_back(sale);
-                    bid.amount = 0.0; //make sure the bid is not processed again
-                    ask.amount = 0.0;
+                    bid->amount = 0.0; //make sure the bid is not processed again
+                    ask->amount = 0.0;
                     break; //can do no more with this ask, go onto the next ask
-                }
-                else if (bid.amount > ask.amount) { //ask is completely gone slice the bid
-                    sale.amount = ask.amount;
+                } else if (bid->amount > ask->amount) { //ask is completely gone slice the bid
+                    sale.amount = ask->amount;
                     sales.push_back(sale);
-                    bid.amount -= ask.amount; //we adjust the bid in place so it can be used to process the next ask
-                    ask.amount = 0.0;
+                    bid->amount -= ask->amount; //we adjust the bid in place so it can be used to process the next ask
+                    ask->amount = 0.0;
                     break; //ask is completely gone, so go to next ask
-                }
-                else if (bid.amount < ask.amount) { //bid is completely gone, slice the ask
-                    sale.amount = bid.amount;
+                } else if (bid->amount < ask->amount) { //bid is completely gone, slice the ask
+                    sale.amount = bid->amount;
                     sales.push_back(sale);
-                    ask.amount -= bid.amount; //update the ask and allow further bids to process the remaining amount
-                    bid.amount = 0.0; //make sure the bid is not processed again
+                    ask->amount -= bid->amount; //update the ask and allow further bids to process the remaining amount
+                    bid->amount = 0.0; //make sure the bid is not processed again
                     continue; //some ask remains so go to the next bid
                 }
             }
         }
     }
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
     finalizedSales.insert(finalizedSales.end(), sales.begin(), sales.end());
     return sales;
 }

@@ -16,10 +16,11 @@ class ServerMain {
         
     private:
         void handleClient(std::shared_ptr<tcp::socket> clientSocket);
+        void startMatching();
+        std::string getCurrentTimestamp();
 
         OrderBook orderBook{"20200317.csv"};
         Wallet wallet;
-        std::string currentTimestamp;
         bool isRunning = true; // Flag to control server running state
 
         asio::io_context io_context; // ASIO IO context - platform specific interface (server side)

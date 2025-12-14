@@ -3,10 +3,11 @@
 #include <sstream>
 #include <vector>
 #include <thread>
+#include <ctime>
 
 void ServerMain::init() {
     std::cout << "ServerMain::init() starting..." << std::endl;
-    currentTimestamp = orderBook.getEarliestTimestamp(); 
+    //currentTimestamp = orderBook.getEarliestTimestamp(); 
     wallet.insertCurrency("BTC", 10.0); 
     
     try {
@@ -17,8 +18,10 @@ void ServerMain::init() {
         return;
     }
 
-    std::cout << "Server initialized." << std::endl;
-    std::cout << "Initial timestamp: " << currentTimestamp << std::endl;
+    // starting the matching engine in a separate thread
+    std::thread matchingEngine(&ServerMain::startMatching, this);
+    matchingEngine.detach();
+    std::cout << "Server started." << std::endl;
     
     run();
 }
@@ -101,7 +104,7 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                         price = std::stod(tokens[3]);
                         
                         OrderBookType type = (command == "ASK") ? OrderBookType::ask : OrderBookType::bid;
-                        OrderBookEntry obe(price, amount, currentTimestamp, product, type, username);
+                        OrderBookEntry obe(price, amount, getCurrentTimestamp(), product, type, username);
                         orderBook.insertOrder(obe);
                         
                         response = "OK " + command + " placed for " + product;
@@ -138,4 +141,45 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
     } catch (std::exception& e) {
         std::cerr << "Exception in handleClient: " << e.what() << std::endl;
     }
+}
+
+void ServerMain::startMatching() {
+    std::vector<std::string> products = orderBook.getKnownProducts();
+    std::string currentTimestamp = getCurrentTimestamp(); 
+    std::cout << "Current timestamp: " << currentTimestamp << std::endl;
+    if (products.empty()) {
+        std::cout << "No orders available yet." << std::endl;
+    }else {
+        std::cout << "Initial products : "<< std::endl;
+        for (const std::string& product : products) {
+            std::cout << "  " << product << std::endl;
+        }
+    }
+
+    while (isRunning) {
+        std::this_thread::sleep_for(std::chrono::seconds(10)); // Match every 10 seconds
+
+        if (!isRunning) break;
+        currentTimestamp = getCurrentTimestamp();
+        products = orderBook.getKnownProducts();
+
+        for (const std::string& product : products) {
+            std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp);
+
+            for (OrderBookEntry& sale : matchedSales) {
+                std::cout << "Sale: " << sale.product << " Price: " << sale.price << " Amount: " << sale.amount << std::endl;
+                // std::cout << "  Buyer: " << sale.username << std::endl;
+                if (sale.username != "dataset"){
+                        wallet.processSale(sale);
+                }
+            }
+        }
+    }
+}
+
+std::string ServerMain::getCurrentTimestamp() {
+    std::time_t now = std::time(nullptr);
+    std::string ts = std::ctime(&now);
+    ts.pop_back();
+    return ts;
 }
