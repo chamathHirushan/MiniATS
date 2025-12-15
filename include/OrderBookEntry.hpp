@@ -20,7 +20,8 @@ class OrderBookEntry {
                        std::string username = "dataset");
 
         static OrderBookType determineOrderType(const std::string& typeStr);
+        static std::string orderTypeToString(const OrderBookType& type);
         static bool compareByTimestamp(const OrderBookEntry& a, const OrderBookEntry& b);
-        static bool compareByPriceAsc(const OrderBookEntry& a, const OrderBookEntry& b);
-        static bool compareByPriceDesc(const OrderBookEntry& a, const OrderBookEntry& b);
+        static bool compareByPriceAsc(OrderBookEntry* a, OrderBookEntry* b);
+        static bool compareByPriceDesc(OrderBookEntry* a, OrderBookEntry* b);
 };

@@ -1,12 +1,63 @@
 # MiniATS
 
+## Download ASIO for Cross-Platform Client-Server
+
+1. Download ASIO from [the official SourceForge page](https://sourceforge.net/projects/asio/).
+2. Extract the downloaded archive.
+3. Move the extracted folder to the `external` directory at the root of the project.
+4. Rename the folder to `asio` so the structure is:  
+    ```
+    root/
+      external/
+         asio/
+    ```
+
 ## Compilation
 
-To compile the project using g++, use the following command:
+To compile the project using `g++`, use the following command:
 
 ```bash
-g++ -std=c++17 src/*.cpp -I include -o build/app
+make all
 ```
+Feel free to edit the `Makefile` to address any cross-platform issues.
+
+### Running the Server and Clients
+
+Start the server and any number of clients using the following commands:
+
+```bash
+build/server
+
+build/client
+```
+
+## Client -> Server Commands
+
+1. **Login:**  
+    Use `LOGIN <username>` to identify yourself to the server.
+
+2. **Place Orders:**  
+    - To sell, use `ASK <product> <amount> <price>`.  
+        <sub>Example: <code>ASK BTC/USD 0.5 50000</code> (The server adds a timestamp automatically.)</sub>
+    - To buy, use `BID <product> <amount> <price>`.  
+        <sub>Example: <code>BID BTC/USD 0.5 49000</code></sub>
+
+3. **Get Information:**  
+    - Check your wallet with `WALLET`.
+    - View market stats using `MARKET`.
+    - View commands `HELP`.
+
+4. **Disconnect:**  
+    Use `EXIT` to log out from the server.
+
+---
+
+## Server -> Client Responses
+
+- Successful actions return `OK` followed by a message, like `OK Order placed id:123`.
+- Errors are sent as `ERR <reason>`, for example, `ERR Insufficient funds`.
+- Data requests (like wallet or market info) respond with `DATA <payload>`, such as `DATA BTC:10.5,USD:500.0`.
+
 
 ## Matching Algorithm
 
