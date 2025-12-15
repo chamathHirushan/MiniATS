@@ -1,5 +1,9 @@
 # MiniATS
 
+## Description
+
+A mini trading system that enables users to place BID and ASK orders through a client–server architecture, allowing multiple clients to trade concurrently. The system includes a price–time priority order matching engine that matches buy and sell orders efficiently, along with a wallet management system to handle user balances, funds reservation, and transaction settlements. At the end of each trading session, the system exports market data, including filled and remaining orders, enabling state persistence and reuse in subsequent sessions.
+
 ## Compilation
 
 To compile the project using `g++`, use the following command:
