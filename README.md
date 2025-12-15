@@ -1,17 +1,5 @@
 # MiniATS
 
-## Download ASIO for Cross-Platform Client-Server
-
-1. Download ASIO from [the official SourceForge page](https://sourceforge.net/projects/asio/).
-2. Extract the downloaded archive.
-3. Move the extracted folder to the `external` directory at the root of the project.
-4. Rename the folder to `asio` so the structure is:  
-    ```
-    root/
-      external/
-         asio/
-    ```
-
 ## Compilation
 
 To compile the project using `g++`, use the following command:
@@ -103,3 +91,15 @@ build/client
                 continue
  return sales
  ```
+
+## Download ASIO for Cross-Platform Client-Server
+
+1. Download ASIO from [the official SourceForge page](https://sourceforge.net/projects/asio/).
+2. Extract the downloaded archive.
+3. Move the extracted folder to the `external` directory at the root of the project.
+4. Rename the folder to `asio` so the structure is:  
+    ```
+    root/
+      external/
+         asio/
+    ```
