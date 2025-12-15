@@ -101,7 +101,9 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
             std::vector<std::string> tokens;
             std::string token;
             std::istringstream tokenStream{msg};
-            while (std::getline(tokenStream, token, ' ')) { // split by space
+            while (std::getline(tokenStream, token, ' ')) { // split by 
+                std::transform(token.begin(), token.end(), token.begin(),
+                   [](unsigned char c){ return std::toupper(c); });
                 tokens.push_back(token);
             }
 
@@ -111,8 +113,6 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
             }
 
             std::string command = tokens[0]; // First token is the command
-            std::transform(command.begin(), command.end(), command.begin(),
-                   [](unsigned char c){ return std::toupper(c); });
             
             if (command == "LOGIN") {
                 if (tokens.size() == 2) {
