@@ -19,12 +19,12 @@ void MerkelMain::init() {
 };
 
 void MerkelMain::printMenu() {
-    std::cout << std::endl;
-    std::cout << "1: Print help" << std::endl;
-    std::cout << "2: Print exchange stats" << std::endl;
-    std::cout << "3: Place an ask" << std::endl;
-    std::cout << "4: Place a bid" << std::endl;
-    std::cout << "5: Print wallet" << std::endl;
+    std::cout << std::endl; //LOGIN
+    std::cout << "1: Print help" << std::endl; //HELP
+    std::cout << "2: Print exchange stats" << std::endl; //MARKET
+    std::cout << "3: Place an ask" << std::endl; //ASK
+    std::cout << "4: Place a bid" << std::endl; //BID
+    std::cout << "5: Print wallet" << std::endl; //WALLET
     std::cout << "6: Continue" << std::endl;
     std::cout<< "Current time is : " << currentTimestamp << std::endl;
 };
