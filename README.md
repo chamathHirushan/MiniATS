@@ -25,10 +25,13 @@ build/client
 
 ## Client -> Server Commands
 
-1. **Login:**  
-    Use `LOGIN <username>` to identify yourself to the server.
+1. **Register**
+   Use `REGISTER <username> <password>` to register to the platform.
 
-2. **Place Orders:**  
+2. **Login:**  
+    Use `LOGIN <username> <password>` to identify yourself to the server.
+
+3. **Place Orders:**  
     - To sell, use `ASK <product> <amount> <price>`.  
         <sub>Example: <code>ASK BTC/USD 0.5 50000</code> (The server adds a timestamp automatically.)</sub>
     - To buy, use `BID <product> <amount> <price>`.  
@@ -38,6 +41,12 @@ build/client
     - Check your wallet with `WALLET`.
     - View market stats using `MARKET`.
     - View commands `HELP`.
+
+4. **Manage Wallet:**  
+    - To Deposit, use `DEPOSIT <product> <amount>`.  
+        <sub>Example: <code>DEPOSIT USDT 1000</code></sub>
+    - To Withdraw, use `WITHDRAW <product> <amount>`.  
+        <sub>Example: <code>WITHDRAW ETH 20</code></sub>
 
 4. **Disconnect:**  
     Use `EXIT` to log out from the server.
