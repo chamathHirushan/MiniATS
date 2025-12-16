@@ -22,5 +22,9 @@ User& UserStore::getUser(const std::string& username) {
     if (it != users.end()) {
         return it->second;
     }
+    if (username == "default") { //TODO
+        users.emplace(username, User(username, "default"));
+        return users.at(username);
+    }
     throw std::runtime_error("User not found: " + username);
 }

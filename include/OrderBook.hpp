@@ -3,6 +3,8 @@
 #include <vector>
 #include <string>
 #include <mutex>
+#include "User.hpp"
+#include "UserStore.hpp"
 
 class OrderBook {
     public:
@@ -33,11 +35,14 @@ class OrderBook {
         std::vector<OrderBookEntry> getSales();
         
         /** match asks to bids and return a list of sales */
-        std::vector<OrderBookEntry> matchAsksToBids(std::string product, std::string currentTimestamp);
+        std::vector<OrderBookEntry> matchAsksToBids(std::string product, std::string currentTimestamp, UserStore& userStore);
 
     private:
         std::string filename;
         std::vector<OrderBookEntry> finalizedSales;
         std::vector<OrderBookEntry> orders;
         mutable std::recursive_mutex ordersMutex; // Mutex lock to protect the orders,finalizedSales when multiple threads access
+
+        /** Implementation to update buyer and seller wallets based on the sale */
+        void processSale(User& buyer, User& seller, const OrderBookEntry& sale);
 };

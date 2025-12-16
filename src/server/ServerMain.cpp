@@ -73,7 +73,6 @@ void ServerMain::run() {
 void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
     try {
         std::string username = "";
-        Wallet userWallet;
         
         // Send welcome message
         std::string welcome = "Welcome to MiniATS Server\n";
@@ -124,7 +123,6 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                     } else {
                         userStore.addUser(u, p);
                         username = u;
-                        userWallet = userStore.getUser(username).getWallet();
                         response = "OK User registered as " + username;
                     }
                 } else {
@@ -143,7 +141,6 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                             continue;
                         }
                         username = u;
-                        userWallet = userStore.getUser(username).getWallet();
                         response = "OK Logged in as " + username;
                     } else {
                         response = "ERR Invalid username. Please REGISTER first.";
@@ -167,7 +164,7 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                         
                         OrderBookType type = (command == "ASK") ? OrderBookType::ask : OrderBookType::bid;
                         OrderBookEntry obe(price, amount, getCurrentTimestamp(), product, type, username);
-                        if (!userWallet.canFulfillOrder(obe)) {
+                        if (!userStore.getUser(username).getWallet().canFulfillOrder(obe)) {
                             response = "ERR Insufficient funds in wallet to place this " + command + ".";
                             asio::write(*clientSocket, asio::buffer(response + "\n"));
                             continue;
@@ -186,7 +183,7 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                 if (username.empty()) {
                     response = "ERR Login required";
                 } else {
-                    response = userWallet.toString();
+                    response = userStore.getUser(username).getWallet().toString();
                 }
             }
             else if (command == "DEPOSIT" || command == "WITHDRAW") {
@@ -200,13 +197,13 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                     try {
                         amount = std::stod(tokens[2]);
                         if (command == "WITHDRAW") {
-                            if (userWallet.removeCurrency(product, amount)) {
+                            if (userStore.getUser(username).getWallet().removeCurrency(product, amount)) {
                                 response = "OK Withdrew " + std::to_string(amount) + " " + product;
                             } else {
                                 response = "ERR Insufficient funds";
                             }
                         } else {
-                            userWallet.insertCurrency(product, amount);
+                            userStore.getUser(username).getWallet().insertCurrency(product, amount);
                             response = "OK Deposited " + std::to_string(amount) + " " + product;
                         }
                     } catch (const std::exception& e) {
@@ -258,14 +255,10 @@ void ServerMain::startMatching() {
         int executedMatches = 0;
 
         for (const std::string& product : products) {
-            std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp);
+            std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp, userStore);
             executedMatches += matchedSales.size();
             // for (OrderBookEntry& sale : matchedSales) {
             //     std::cout << "Sale: " << sale.product << " Price: " << sale.price << " Amount: " << sale.amount << std::endl;
-            //     // std::cout << "  Buyer: " << sale.username << std::endl;
-            //     if (sale.username != "default"){
-            //             wallet.processSale(sale);
-            //     }
             // }
         }
         std::cout << "Matching engine executed " << executedMatches << " matches at " << currentTimestamp << std::endl;
