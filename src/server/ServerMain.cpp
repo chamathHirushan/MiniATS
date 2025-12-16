@@ -178,7 +178,7 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                 if (username.empty()) {
                     response = "ERR Login required";
                 } else {
-                    response = "DATA " + userStore.getUser(username).getWallet().toString();
+                    response = userStore.getUser(username).getWallet().toString();
                 }
             }
             else if (command == "DEPOSIT" || command == "WITHDRAW") {
@@ -216,9 +216,6 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
             }
             else if (command == "EXIT") {
                 break;
-            }
-            else if (command == "HELP") {
-                response = "OK Commands: LOGIN <user>, ASK/BID <prod> <amt> <price>, WALLET, MARKET, EXIT";
             }
             else {
                 response = "ERR Unknown command. Type HELP for list.";
@@ -259,7 +256,7 @@ void ServerMain::startMatching() {
             // for (OrderBookEntry& sale : matchedSales) {
             //     std::cout << "Sale: " << sale.product << " Price: " << sale.price << " Amount: " << sale.amount << std::endl;
             //     // std::cout << "  Buyer: " << sale.username << std::endl;
-            //     if (sale.username != "dataset"){
+            //     if (sale.username != "default"){
             //             wallet.processSale(sale);
             //     }
             // }

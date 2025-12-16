@@ -154,13 +154,8 @@ std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std:
 
             if (bid->price >= ask->price) { //we have a match
 
-                OrderBookType type = OrderBookType::asksale;
-                std::string username = ask->username;
-                if (bid->username != "dataset") {
-                    username = bid->username;
-                    type = OrderBookType::bidsale;
-                }
-                OrderBookEntry sale{ask->price, 0.0, currentTimestamp, product, type, username};
+                OrderBookType type = OrderBookType::sale;
+                OrderBookEntry sale{ask->price, 0.0, currentTimestamp, product, type};
                 if (bid->amount == ask->amount) { //bid completely clears ask
                     sale.amount = ask->amount;
                     sales.push_back(sale);
