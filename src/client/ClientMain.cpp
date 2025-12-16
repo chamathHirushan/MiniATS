@@ -34,11 +34,25 @@ void ClientMain::run() {
         // Client input loop
         std::string userInput; // buffer to hold user input
         while(true) {
+            std::cout << "Type HELP for commands" << std::endl;
             std::cout << "> ";
             std::getline(std::cin, userInput);
 
-            if (userInput == "EXIT") {
+            if (userInput == "EXIT" || userInput == "exit") {
                 break;
+            }
+
+            if (userInput == "HELP" || userInput == "help") {
+                std::cout << "  Register to the platform: REGISTER <user> <password>"<<std::endl;
+                std::cout << "  Login to the platform:    LOGIN <user> <password>"<<std::endl;
+                std::cout << "  Place an order:           ASK/BID <prod> <amount> <price>"<<std::endl;
+                std::cout << "  View wallet:              WALLET"<<std::endl;
+                std::cout << "  Deposit to wallet:        DEPOSIT <prod> <amount>"<<std::endl;
+                std::cout << "  Withdraw from wallet:     WITHDRAW <prod> <amount>"<<std::endl;
+                std::cout << "  View market:              MARKET"<<std::endl;
+                std::cout << "  Exit the application:     EXIT" << std::endl;
+                std::cout << std::endl;
+                continue;
             }
 
             if (userInput.length() > 0) {
@@ -55,7 +69,7 @@ void ClientMain::run() {
                     throw asio::system_error(error);
                 }
 
-                std::cout << "Server: " << std::string(recvbuf, len) << std::endl;
+                std::cout << "  Server: " << std::string(recvbuf, len) << std::endl;
             }
         }
     } catch (std::exception& e) {

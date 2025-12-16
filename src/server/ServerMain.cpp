@@ -12,7 +12,8 @@ ServerMain* ServerMain::serverInstance = nullptr; // Global pointer to current i
 void ServerMain::cleanup(int signum) {
     std::cout << "\nShutting down server..." << std::endl;
     if (serverInstance != nullptr) {
-
+        
+        //CSVHandler::usersToCSV("users.csv", serverInstance->userStore.getUsers());
         CSVHandler::entriesToCSV("sales.csv", serverInstance->orderBook.getSales());
         CSVHandler::entriesToCSV(serverInstance->orderBook.getFilename(), serverInstance->orderBook.getOrders(), false);
         std::cout << "Exported records successfully." << std::endl;
@@ -31,8 +32,6 @@ void ServerMain::init() {
     serverInstance = this;
     std::signal(SIGINT, ServerMain::cleanup); // Handle Ctrl+C
     std::signal(SIGTERM, ServerMain::cleanup); // Handle termination signal
-    
-    wallet.insertCurrency("BTC", 10.0);
     
     try {
         // Create and bind the TCP acceptor to listen on port 5322 (IPv4) for incoming client connections
@@ -73,7 +72,7 @@ void ServerMain::run() {
 
 void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
     try {
-        std::string username = "guest";
+        std::string username = "";
         
         // Send welcome message
         std::string welcome = "Welcome to MiniATS Server\n";
@@ -102,8 +101,6 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
             std::string token;
             std::istringstream tokenStream{msg};
             while (std::getline(tokenStream, token, ' ')) { // split by 
-                std::transform(token.begin(), token.end(), token.begin(),
-                   [](unsigned char c){ return std::toupper(c); });
                 tokens.push_back(token);
             }
 
@@ -113,18 +110,52 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
             }
 
             std::string command = tokens[0]; // First token is the command
+            std::transform(command.begin(), command.end(), command.begin(),
+                   [](unsigned char c){ return std::toupper(c); });
             
-            if (command == "LOGIN") {
-                if (tokens.size() == 2) {
-                    username = tokens[1];
-                    response = "OK Logged in as " + username;
+            if (command == "REGISTER") {
+                if (tokens.size() == 3) {
+                    std::string u = tokens[1];
+                    std::string p = tokens[2];
+
+                    if (userStore.userExists(u)) {
+                        response = "ERR User already exists. Please LOGIN.";
+                    } else {
+                        userStore.addUser(u, p);
+                        username = u;
+                        response = "OK User registered as " + username;
+                    }
+                } else {
+                    response = "ERR Invalid REGISTER command";
+                }
+            }
+            else if (command == "LOGIN") {
+                if (tokens.size() == 3) {
+                    std::string u = tokens[1];
+                    std::string p = tokens[2];
+                    if (userStore.userExists(u)) {
+                        User& user = userStore.getUser(u);
+                        if (!user.validatePassword(p)) {
+                            response = "ERR Invalid credentials. Try again.";
+                            asio::write(*clientSocket, asio::buffer(response + "\n"));
+                            continue;
+                        }
+                        username = u;
+                        response = "OK Logged in as " + username;
+                    } else {
+                        response = "ERR Invalid username. Please REGISTER first.";
+                    }
                 } else {
                     response = "ERR Invalid LOGIN command";
                 }
             }
             else if (command == "ASK" || command == "BID") {
-                if (tokens.size() == 4) {
+                if (username.empty()) {
+                    response = "ERR Login required";
+                } else if (tokens.size() == 4) {
                     std::string product = tokens[1];
+                    std::transform(product.begin(), product.end(), product.begin(),
+                       [](unsigned char c){ return std::toupper(c); });
                     double amount = 0;
                     double price = 0;
                     try {
@@ -144,7 +175,37 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                 }
             }
             else if (command == "WALLET") {
-                response = "DATA " + wallet.toString();
+                if (username.empty()) {
+                    response = "ERR Login required";
+                } else {
+                    response = "DATA " + userStore.getUser(username).getWallet().toString();
+                }
+            }
+            else if (command == "DEPOSIT" || command == "WITHDRAW") {
+                if (username.empty()) {
+                    response = "ERR Login required";
+                } else {
+                    std::string product = tokens[1];
+                    std::transform(product.begin(), product.end(), product.begin(),
+                       [](unsigned char c){ return std::toupper(c); });
+                    double amount = 0;
+                    try {
+                        amount = std::stod(tokens[2]);
+                        Wallet& wallet = userStore.getUser(username).getWallet();
+                        if (command == "WITHDRAW") {
+                            if (wallet.removeCurrency(product, amount)) {
+                                response = "OK Withdrew " + std::to_string(amount) + " " + product;
+                            } else {
+                                response = "ERR Insufficient funds";
+                            }
+                        } else {
+                            wallet.insertCurrency(product, amount);
+                            response = "OK Deposited " + std::to_string(amount) + " " + product;
+                        }
+                    } catch (const std::exception& e) {
+                        response = "ERR Invalid amount";
+                    }
+                }
             }
             else if (command == "MARKET") {
                 std::string products;

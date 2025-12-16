@@ -13,7 +13,7 @@ OrderBook::OrderBook(const std::string& filename) {
 }
 
 std::vector<std::string> OrderBook::getKnownProducts() {
-    std::lock_guard<std::recursive_mutex> lock(ordersMutex); //TODO 
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex); 
     // Implementation to extract known products from entries
     std::vector<std::string> products;
     std::map<std::string, bool> productMap;

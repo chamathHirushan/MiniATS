@@ -1,10 +1,11 @@
 #pragma once
 #include "OrderBook.hpp"
-#include "Wallet.hpp"
 #include <string>
 #include <vector>
 #include <memory>
 #include <asio.hpp>
+#include "UserStore.hpp"
+#include <map>
 
 using asio::ip::tcp;
 
@@ -20,7 +21,7 @@ class ServerMain {
         std::string getCurrentTimestamp();
 
         OrderBook orderBook{"orders.csv"};
-        Wallet wallet;
+        UserStore userStore{"users.csv"};//TODO
         bool isRunning = true; // Flag to control server running state
 
         static void cleanup(int signum); // Signal handler for cleanup
