@@ -22,7 +22,7 @@ class ServerMain {
         std::string getCurrentTimestamp();
 
         OrderBook orderBook{"orders.csv"};
-        UserStore userStore;
+        UserStore userStore{"users.csv"};//TODO
         std::map<std::string, Wallet> wallets;
         bool isRunning = true; // Flag to control server running state
 

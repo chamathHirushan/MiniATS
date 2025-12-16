@@ -12,7 +12,8 @@ ServerMain* ServerMain::serverInstance = nullptr; // Global pointer to current i
 void ServerMain::cleanup(int signum) {
     std::cout << "\nShutting down server..." << std::endl;
     if (serverInstance != nullptr) {
-
+        
+        //CSVHandler::usersToCSV("users.csv", serverInstance->userStore.getUsers());
         CSVHandler::entriesToCSV("sales.csv", serverInstance->orderBook.getSales());
         CSVHandler::entriesToCSV(serverInstance->orderBook.getFilename(), serverInstance->orderBook.getOrders(), false);
         std::cout << "Exported records successfully." << std::endl;
@@ -31,9 +32,6 @@ void ServerMain::init() {
     serverInstance = this;
     std::signal(SIGINT, ServerMain::cleanup); // Handle Ctrl+C
     std::signal(SIGTERM, ServerMain::cleanup); // Handle termination signal
-    
-    //TODO initialize wallets from persistent storage if needed
-    userStore.init("users.csv");
     
     try {
         // Create and bind the TCP acceptor to listen on port 5322 (IPv4) for incoming client connections
@@ -135,11 +133,17 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                 if (tokens.size() == 3) {
                     std::string u = tokens[1];
                     std::string p = tokens[2];
-                    if (userStore.validate(u, p)) {
+                    if (userStore.userExists(u)) {
+                        User& user = userStore.getUser(u);
+                        if (!user.validatePassword(p)) {
+                            response = "ERR Invalid credentials. Try again.";
+                            asio::write(*clientSocket, asio::buffer(response + "\n"));
+                            continue;
+                        }
                         username = u;
                         response = "OK Logged in as " + username;
                     } else {
-                        response = "ERR Invalid credentials. Register if new user.";
+                        response = "ERR Invalid username. Please REGISTER first.";
                     }
                 } else {
                     response = "ERR Invalid LOGIN command";

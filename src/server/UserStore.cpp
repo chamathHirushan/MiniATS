@@ -1,39 +1,8 @@
 #include "UserStore.hpp"
+#include <stdexcept>
 
-UserStore::UserStore() {}
-
-void UserStore::init(const std::string& filename) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Could not open user store file: " << filename << std::endl;
-        return;
-    }
-
-    std::string line;
-    while (std::getline(file, line)) {
-        if (line.empty()) continue;
-        
-        std::stringstream ss(line);
-        std::string username, password;
-        
-        if (std::getline(ss, username, ',') && std::getline(ss, password)) {
-            if (!password.empty() && password.back() == '\r') {
-                password.pop_back();
-            }
-            users[username] = password;
-        }
-    }
-    std::cout << "Loaded " << users.size() << " users." << std::endl;
-}
-
-bool UserStore::validate(const std::string& username, const std::string& password) {
-    auto it = users.find(username);
-    if (it != users.end()) {
-        if (it->second == password) {
-            return true;
-        }
-    }
-    return false;
+UserStore::UserStore(const std::string& filename) {
+    this->filename = filename;
 }
 
 bool UserStore::userExists(const std::string& username) {
@@ -41,5 +10,17 @@ bool UserStore::userExists(const std::string& username) {
 }
 
 void UserStore::addUser(const std::string& username, const std::string& password) {
-    users[username] = password;
+    users.emplace(username, User(username, password));
+}
+
+bool UserStore::removeUser(const std::string& username) {
+    return users.erase(username) > 0;
+}
+
+User& UserStore::getUser(const std::string& username) {
+    auto it = users.find(username);
+    if (it != users.end()) {
+        return it->second;
+    }
+    throw std::runtime_error("User not found: " + username);
 }
