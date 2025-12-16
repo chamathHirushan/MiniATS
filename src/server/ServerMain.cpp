@@ -212,11 +212,25 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                 }
             }
             else if (command == "MARKET") {
-                std::string products;
-                for (const auto& p : orderBook.getKnownProducts()) {
-                    products += p + ",";
+                std::ostringstream oss;
+                for (const auto& product : orderBook.getKnownProducts()) {
+                    oss << "\n Product: " << product << "\n";
+
+                    // ----- BIDS -----
+                    std::vector<OrderBookEntry*> bids =orderBook.getOrders(OrderBookType::bid, product);
+                    oss << "  Bids: " << bids.size() << "\n";
+                    oss << "  High Bid: " << OrderBook::getHighPrice(bids) << "\n";
+                    oss << "  Avg Bid Price: " << OrderBook::getAvgPrice(bids) << "\n";
+                    oss << "  Total Bid Volume: " << OrderBook::getTotalVolume(bids) << "\n";
+
+                    // ----- ASKS -----
+                    std::vector<OrderBookEntry*> asks = orderBook.getOrders(OrderBookType::ask, product);
+                    oss << "  Asks: " << asks.size() << "\n";
+                    oss << "  Low Ask: " << OrderBook::getLowPrice(asks) << "\n";
+                    oss << "  Avg Ask Price: " << OrderBook::getAvgPrice(asks) << "\n";
+                    oss << "  Total Ask Volume: " << OrderBook::getTotalVolume(asks) << "\n";
                 }
-                response = "DATA " + products;
+                response = oss.str() + "\n";
             }
             else if (command == "EXIT") {
                 break;

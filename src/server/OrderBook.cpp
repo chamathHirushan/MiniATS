@@ -41,44 +41,44 @@ std::vector<OrderBookEntry*> OrderBook::getOrders(OrderBookType type, const std:
     return filteredOrders;
 }
 
-double OrderBook::getHighPrice(const std::vector<OrderBookEntry>& orders) {
+double OrderBook::getHighPrice(const std::vector<OrderBookEntry*>& orders) {
     if (orders.empty()) return 0.0;
-    double max = orders[0].price;
-    for (const OrderBookEntry& e : orders) {
-        if (e.price > max) {
-            max = e.price;
+    double max = orders[0]->price;
+    for (const OrderBookEntry* e : orders) {
+        if (e->price > max) {
+            max = e->price;
         }
     }
     return max;
 }
 
-double OrderBook::getLowPrice(const std::vector<OrderBookEntry>& orders) {
+double OrderBook::getLowPrice(const std::vector<OrderBookEntry*>& orders) {
     if (orders.empty()) return 0.0;
-    double min = orders[0].price;
-    for (const OrderBookEntry& e : orders) {
-        if (e.price < min) {
-            min = e.price;
+    double min = orders[0]->price;
+    for (const OrderBookEntry* e : orders) {
+        if (e->price < min) {
+            min = e->price;
         }
     }
     return min;
 }
 
-double OrderBook::getAvgPrice(const std::vector<OrderBookEntry>& orders) {
+double OrderBook::getAvgPrice(const std::vector<OrderBookEntry*>& orders) {
     double total = 0.0;
     int count = 0;
     double totalVolume = 0.0;
-    for (const OrderBookEntry& entry : orders) {
-        total += entry.price * entry.amount;
-        totalVolume += entry.amount;
+    for (const OrderBookEntry* entry : orders) {
+        total += entry->price * entry->amount;
+        totalVolume += entry->amount;
     }
     if (totalVolume == 0.0) return 0.0;
     return total / totalVolume;
 }
 
-double OrderBook::getTotalVolume(const std::vector<OrderBookEntry>& orders) {
+double OrderBook::getTotalVolume(const std::vector<OrderBookEntry*>& orders) {
     double totalVolume = 0.0;
-    for (const OrderBookEntry& entry : orders) {
-            totalVolume += entry.amount;
+    for (const OrderBookEntry* entry : orders) {
+            totalVolume += entry->amount;
         }
     return totalVolume;
 }
