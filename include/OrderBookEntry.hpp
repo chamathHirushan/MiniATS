@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-enum class OrderBookType {bid, ask, asksale, bidsale};
+enum class OrderBookType {bid, ask, sale};
 
 class OrderBookEntry {
     public:
@@ -17,7 +17,7 @@ class OrderBookEntry {
                        std::string timestamp, 
                        std::string product, 
                        OrderBookType orderType,
-                       std::string username = "dataset");
+                       std::string username = "default");
 
         static OrderBookType determineOrderType(const std::string& typeStr);
         static std::string orderTypeToString(const OrderBookType& type);

@@ -1,16 +1,8 @@
 # MiniATS
 
-## Download ASIO for Cross-Platform Client-Server
+## Description
 
-1. Download ASIO from [the official SourceForge page](https://sourceforge.net/projects/asio/).
-2. Extract the downloaded archive.
-3. Move the extracted folder to the `external` directory at the root of the project.
-4. Rename the folder to `asio` so the structure is:  
-    ```
-    root/
-      external/
-         asio/
-    ```
+A mini trading system that enables users to place BID and ASK orders through a client–server architecture, allowing multiple clients to trade concurrently. The system includes a price–time priority order matching engine that matches buy and sell orders efficiently, along with a wallet management system to handle user balances, funds reservation, and transaction settlements. At the end of each trading session, the system exports market data, including filled and remaining orders, enabling state persistence and reuse in subsequent sessions.
 
 ## Compilation
 
@@ -33,10 +25,13 @@ build/client
 
 ## Client -> Server Commands
 
-1. **Login:**  
-    Use `LOGIN <username>` to identify yourself to the server.
+1. **Register**
+   Use `REGISTER <username> <password>` to register to the platform.
 
-2. **Place Orders:**  
+2. **Login:**  
+    Use `LOGIN <username> <password>` to identify yourself to the server.
+
+3. **Place Orders:**  
     - To sell, use `ASK <product> <amount> <price>`.  
         <sub>Example: <code>ASK BTC/USD 0.5 50000</code> (The server adds a timestamp automatically.)</sub>
     - To buy, use `BID <product> <amount> <price>`.  
@@ -46,6 +41,12 @@ build/client
     - Check your wallet with `WALLET`.
     - View market stats using `MARKET`.
     - View commands `HELP`.
+
+4. **Manage Wallet:**  
+    - To Deposit, use `DEPOSIT <product> <amount>`.  
+        <sub>Example: <code>DEPOSIT USDT 1000</code></sub>
+    - To Withdraw, use `WITHDRAW <product> <amount>`.  
+        <sub>Example: <code>WITHDRAW ETH 20</code></sub>
 
 4. **Disconnect:**  
     Use `EXIT` to log out from the server.
@@ -103,3 +104,15 @@ build/client
                 continue
  return sales
  ```
+
+## Download ASIO for Cross-Platform Client-Server
+
+1. Download ASIO from [the official SourceForge page](https://sourceforge.net/projects/asio/).
+2. Extract the downloaded archive.
+3. Move the extracted folder to the `external` directory at the root of the project.
+4. Rename the folder to `asio` so the structure is:  
+    ```
+    root/
+      external/
+         asio/
+    ```
