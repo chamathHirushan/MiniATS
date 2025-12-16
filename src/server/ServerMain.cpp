@@ -178,7 +178,33 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                 if (username.empty()) {
                     response = "ERR Login required";
                 } else {
-                    response = "DATA " + wallets[username].toString();
+                    response = "DATA " + userStore.getUser(username).getWallet().toString();
+                }
+            }
+            else if (command == "DEPOSIT" || command == "WITHDRAW") {
+                if (username.empty()) {
+                    response = "ERR Login required";
+                } else {
+                    std::string product = tokens[1];
+                    std::transform(product.begin(), product.end(), product.begin(),
+                       [](unsigned char c){ return std::toupper(c); });
+                    double amount = 0;
+                    try {
+                        amount = std::stod(tokens[2]);
+                        Wallet& wallet = userStore.getUser(username).getWallet();
+                        if (command == "WITHDRAW") {
+                            if (wallet.removeCurrency(product, amount)) {
+                                response = "OK Withdrew " + std::to_string(amount) + " " + product;
+                            } else {
+                                response = "ERR Insufficient funds";
+                            }
+                        } else {
+                            wallet.insertCurrency(product, amount);
+                            response = "OK Deposited " + std::to_string(amount) + " " + product;
+                        }
+                    } catch (const std::exception& e) {
+                        response = "ERR Invalid amount";
+                    }
                 }
             }
             else if (command == "MARKET") {

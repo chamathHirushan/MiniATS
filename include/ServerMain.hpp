@@ -1,6 +1,5 @@
 #pragma once
 #include "OrderBook.hpp"
-#include "Wallet.hpp"
 #include <string>
 #include <vector>
 #include <memory>
@@ -23,7 +22,6 @@ class ServerMain {
 
         OrderBook orderBook{"orders.csv"};
         UserStore userStore{"users.csv"};//TODO
-        std::map<std::string, Wallet> wallets;
         bool isRunning = true; // Flag to control server running state
 
         static void cleanup(int signum); // Signal handler for cleanup
