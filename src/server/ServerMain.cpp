@@ -73,6 +73,7 @@ void ServerMain::run() {
 void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
     try {
         std::string username = "";
+        Wallet userWallet;
         
         // Send welcome message
         std::string welcome = "Welcome to MiniATS Server\n";
@@ -123,6 +124,7 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                     } else {
                         userStore.addUser(u, p);
                         username = u;
+                        userWallet = userStore.getUser(username).getWallet();
                         response = "OK User registered as " + username;
                     }
                 } else {
@@ -141,6 +143,7 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                             continue;
                         }
                         username = u;
+                        userWallet = userStore.getUser(username).getWallet();
                         response = "OK Logged in as " + username;
                     } else {
                         response = "ERR Invalid username. Please REGISTER first.";
@@ -164,11 +167,16 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                         
                         OrderBookType type = (command == "ASK") ? OrderBookType::ask : OrderBookType::bid;
                         OrderBookEntry obe(price, amount, getCurrentTimestamp(), product, type, username);
+                        if (!userWallet.canFulfillOrder(obe)) {
+                            response = "ERR Insufficient funds in wallet to place this " + command + ".";
+                            asio::write(*clientSocket, asio::buffer(response + "\n"));
+                            continue;
+                        }
                         orderBook.insertOrder(obe);
                         
                         response = "OK " + command + " placed for " + product;
                     } catch (const std::exception& e) {
-                        response = "ERR Invalid numbers";
+                        response = "ERR Invalid order";
                     }
                 } else {
                     response = "ERR Invalid " + command + " command";
@@ -178,7 +186,7 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                 if (username.empty()) {
                     response = "ERR Login required";
                 } else {
-                    response = userStore.getUser(username).getWallet().toString();
+                    response = userWallet.toString();
                 }
             }
             else if (command == "DEPOSIT" || command == "WITHDRAW") {
@@ -191,15 +199,14 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                     double amount = 0;
                     try {
                         amount = std::stod(tokens[2]);
-                        Wallet& wallet = userStore.getUser(username).getWallet();
                         if (command == "WITHDRAW") {
-                            if (wallet.removeCurrency(product, amount)) {
+                            if (userWallet.removeCurrency(product, amount)) {
                                 response = "OK Withdrew " + std::to_string(amount) + " " + product;
                             } else {
                                 response = "ERR Insufficient funds";
                             }
                         } else {
-                            wallet.insertCurrency(product, amount);
+                            userWallet.insertCurrency(product, amount);
                             response = "OK Deposited " + std::to_string(amount) + " " + product;
                         }
                     } catch (const std::exception& e) {
