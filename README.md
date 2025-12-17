@@ -49,7 +49,12 @@ build/client
     - To Withdraw, use `WITHDRAW <product> <amount>`.  
         <sub>Example: <code>WITHDRAW ETH 20</code></sub>
 
-4. **Disconnect:**  
+5. **Manage Orders:**  
+    - Check your Orders with `ORDERS`.
+    - To Cancel an order, use `CANCEL <order id>`.
+        <sub>Example: <code>CANCEL 3500</code></sub>
+
+6. **Disconnect:**  
     Use `EXIT` to log out from the server.
 
 ---
