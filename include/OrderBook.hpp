@@ -46,7 +46,7 @@ class OrderBook {
         mutable std::recursive_mutex ordersMutex; // Mutex lock to protect the orders,finalizedSales when multiple threads access
 
         /** Implementation to update buyer and seller wallets based on the sale */
-        void processSale(User& buyer, User& seller, const OrderBookEntry& sale);
+        void processSale(User& buyer, User& seller, const OrderBookEntry& sale, double bid_price, double ask_price);
         /** Remove matched orders from the order book */
         void removeMatchedOrders();
 };

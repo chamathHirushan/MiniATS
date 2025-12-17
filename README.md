@@ -63,7 +63,6 @@ build/client
 
 - Successful actions return `OK` followed by a message, like `OK Order placed id:123`.
 - Errors are sent as `ERR <reason>`, for example, `ERR Insufficient funds`.
-- Data requests (like wallet or market info) respond with `DATA <payload>`, such as `DATA BTC:10.5,USD:500.0`.
 
 
 ## Matching Algorithm

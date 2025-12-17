@@ -176,7 +176,7 @@ std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std:
                     sales.push_back(sale);
                     bid->amount = 0.0; //make sure the bid is not processed again
                     ask->amount = 0.0;
-                    processSale(buyer, seller, sale);
+                    processSale(buyer, seller, sale, bid->price, ask->price);
                     break; //can do no more with this ask, go onto the next ask
 
                 } else if (bid->amount > ask->amount) { //ask is completely gone slice the bid
@@ -184,7 +184,7 @@ std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std:
                     sales.push_back(sale);
                     bid->amount -= ask->amount; //we adjust the bid in place so it can be used to process the next ask
                     ask->amount = 0.0;
-                    processSale(buyer, seller, sale);
+                    processSale(buyer, seller, sale, bid->price, ask->price);
                     break; //ask is completely gone, so go to next ask
 
                 } else if (bid->amount < ask->amount) { //bid is completely gone, slice the ask
@@ -192,7 +192,7 @@ std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std:
                     sales.push_back(sale);
                     ask->amount -= bid->amount; //update the ask and allow further bids to process the remaining amount
                     bid->amount = 0.0; //make sure the bid is not processed again
-                    processSale(buyer, seller, sale);
+                    processSale(buyer, seller, sale, bid->price, ask->price);
                     continue; //some ask remains so go to the next bid
 
                 }
@@ -204,7 +204,7 @@ std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std:
     return sales;
 }
 
-void OrderBook::processSale(User& buyer, User& seller, const OrderBookEntry& sale) {
+void OrderBook::processSale(User& buyer, User& seller, const OrderBookEntry& sale, double bid_price, double ask_price) {
     /** example: sale BTC/USDT
      * buyer pays USDT and receives BTC
      * seller pays BTC and receives USDT
@@ -234,6 +234,12 @@ void OrderBook::processSale(User& buyer, User& seller, const OrderBookEntry& sal
         }
     }
     sellerWallet.insertCurrency(tokens[1], totalCost);
+
+    // Handle refunds for buyer if bid price > ask price
+    if (bid_price > ask_price) {
+        double refund = (bid_price - ask_price) * sale.amount;
+        buyerWallet.unlockCurrency(tokens[1], refund);
+    }
 }
 
 void OrderBook::removeMatchedOrders() {

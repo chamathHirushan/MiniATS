@@ -118,7 +118,10 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                     std::string u = tokens[1];
                     std::string p = tokens[2];
 
-                    if (userStore.userExists(u)) {
+                    if (u == "default") {
+                        response = "ERR Username not allowed. Please choose another.";
+                    }
+                    else if (userStore.userExists(u)) {
                         response = "ERR User already exists. Please LOGIN.";
                     } else {
                         userStore.addUser(u, p);
@@ -133,7 +136,11 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                 if (tokens.size() == 3) {
                     std::string u = tokens[1];
                     std::string p = tokens[2];
-                    if (userStore.userExists(u)) {
+
+                    if (u == "default") {
+                        response = "ERR Username not allowed. Please choose another.";
+                    }
+                    else if (userStore.userExists(u)) {
                         User& user = userStore.getUser(u);
                         if (!user.validatePassword(p)) {
                             response = "ERR Invalid credentials. Try again.";
