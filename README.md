@@ -51,7 +51,7 @@ build/client
 
 5. **Manage Orders:**  
     - Check your Orders with `ORDERS`.
-    - To Cancel an order, use `CANCEL <order id>`.
+    - To Cancel an order, use `CANCEL <order id>`.    
         <sub>Example: <code>CANCEL 3500</code></sub>
 
 6. **Disconnect:**  
