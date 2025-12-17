@@ -164,7 +164,7 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                         
                         OrderBookType type = (command == "ASK") ? OrderBookType::ask : OrderBookType::bid;
                         OrderBookEntry obe(price, amount, getCurrentTimestamp(), product, type, username);
-                        if (!userStore.getUser(username).getWallet().canFulfillOrder(obe)) {
+                        if (!userStore.getUser(username).getWallet().fulfillOrder(obe)) {
                             response = "ERR Insufficient funds in wallet to place this " + command + ".";
                             asio::write(*clientSocket, asio::buffer(response + "\n"));
                             continue;
@@ -177,6 +177,59 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                     }
                 } else {
                     response = "ERR Invalid " + command + " command";
+                }
+            }else if (command == "ORDERS") {
+                if (username.empty()) {
+                    response = "ERR Login required";
+                } else {
+                    std::ostringstream oss;
+                    std::vector<OrderBookEntry> orders = orderBook.getOrders();
+                    int count = 0;
+                    oss << "Ongoing orders of user " << username << ":\n";
+                    for (const auto& order : orders) {
+                        if (order.username == username) {
+                            count++;
+                            oss << " ID: " << order.id
+                                << " | " << OrderBookEntry::orderTypeToString(order.orderType)
+                                << " | " << order.product
+                                << " | Amount: " << order.amount
+                                << " | Price: " << order.price
+                                << " | Timestamp: " << order.timestamp << "\n";
+                        }
+                    }
+                    if (count == 0) {
+                        oss << "    (no ongoing orders)";
+                    }
+                    response = oss.str();
+                }
+            }
+            else if (command == "CANCEL") {
+                if (username.empty()) {
+                    response = "ERR Login required";
+                } else if (tokens.size() == 2) {
+                    int orderId = 0;
+                    try {
+                        orderId = std::stoi(tokens[1]);
+                        std::vector<OrderBookEntry> orders = orderBook.getOrders();
+                        bool found = false;
+                        for (auto& order : orders) {
+                            if (orderId == order.id && order.username == username) {
+                                found = true;
+                                userStore.getUser(username).getWallet().cancelOrder(order);
+                                break;
+                            }
+                        }
+                        if (found) {
+                            orderBook.removeOrderById(orderId);
+                            response = "OK Order cancelled.";
+                        } else {
+                            response = "ERR Order not found or not owned by user.";
+                        }
+                    } catch (const std::exception& e) {
+                        response = "ERR Invalid order ID";
+                    }
+                } else {
+                    response = "ERR Invalid CANCEL command";
                 }
             }
             else if (command == "WALLET") {

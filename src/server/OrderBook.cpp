@@ -132,6 +132,14 @@ std::vector<OrderBookEntry> OrderBook::getSales() {
     return finalizedSales;
 }
 
+void OrderBook::removeOrderById(std::size_t id) {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
+    orders.erase(std::remove_if(orders.begin(), orders.end(),
+        [id](const OrderBookEntry& entry) {
+            return entry.id == id;
+        }), orders.end());
+}
+
 std::string OrderBook::getFilename() const {
     return filename;
 }
@@ -209,7 +217,7 @@ void OrderBook::processSale(User& buyer, User& seller, const OrderBookEntry& sal
 
     // Update buyer's wallet
     Wallet& buyerWallet = buyer.getWallet();
-    if (!buyerWallet.removeCurrency(tokens[1], totalCost)) {
+    if (!buyerWallet.spendLocked(tokens[1], totalCost)) {
         if (buyer.getUsername() != "default") {
             std::cout<<"name: " << buyer.getUsername() << "wallet: "<< buyerWallet.toString() <<"required: "<< totalCost << "product: "<< sale.product << std::endl;
             throw std::runtime_error("Buyer has insufficient funds"); //TODO
@@ -219,7 +227,7 @@ void OrderBook::processSale(User& buyer, User& seller, const OrderBookEntry& sal
 
     // Update seller's wallet
     Wallet& sellerWallet = seller.getWallet();
-    if (!sellerWallet.removeCurrency(tokens[0], sale.amount)) {
+    if (!sellerWallet.spendLocked(tokens[0], sale.amount)) {
         if (seller.getUsername() != "default") {
             std::cout<<"name: " << seller.getUsername() << " wallet: "<< sellerWallet.toString() <<" required: "<< sale.amount << " product: "<< sale.product << std::endl;
             throw std::runtime_error("Seller has insufficient funds"); //TODO

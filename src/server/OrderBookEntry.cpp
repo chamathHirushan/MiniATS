@@ -1,6 +1,8 @@
 #include "OrderBookEntry.hpp"
 #include <stdexcept>
 
+std::size_t OrderBookEntry::nextId = 1;
+
 OrderBookEntry:: OrderBookEntry(double price, 
                        double amount, 
                        std::string timestamp, 
@@ -14,6 +16,8 @@ OrderBookEntry:: OrderBookEntry(double price,
             this->product = product;
             this->orderType = orderType;
             this->username = username;
+
+            id = nextId++;
         }
 
 OrderBookType OrderBookEntry::determineOrderType(const std::string& typeStr) {

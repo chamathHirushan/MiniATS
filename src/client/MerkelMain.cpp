@@ -78,7 +78,7 @@
 //     try{
 //         OrderBookEntry newAsk = CSVHandler::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::ask);
 //         newAsk.username = "SimUser";
-//         if (wallet.canFulfillOrder(newAsk)) {
+//         if (wallet.fulfillOrder(newAsk)) {
 //             orderBook.insertOrder(newAsk);
 //             std::cout << "You entered: " << askOffer << std::endl;
 //         } else {
@@ -103,7 +103,7 @@
 //     try{
 //         OrderBookEntry newBid = CSVHandler::parseLine(tokens[1], tokens[2], currentTimestamp, tokens[0], OrderBookType::bid);
 //         newBid.username = "SimUser";
-//         if (wallet.canFulfillOrder(newBid)) {
+//         if (wallet.fulfillOrder(newBid)) {
 //             orderBook.insertOrder(newBid);
 //             std::cout << "You entered: " << bidOffer << std::endl;
 //         } else {

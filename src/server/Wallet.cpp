@@ -34,22 +34,68 @@ std::string Wallet::toString() {
         return result;
     }
     for (const auto& pair : currencies) {
+        if (pair.second > 0)
         result += "     " + pair.first + ": " + std::to_string(pair.second) + "\n";
+    }
+    for (const auto& pair : locked) {
+        if (pair.second > 0)
+        result += "     (Locked) " + pair.first + ": " + std::to_string(pair.second) + "\n";
     }
     return result;
 }
 
-bool Wallet::canFulfillOrder(OrderBookEntry& order) {
+bool Wallet::fulfillOrder(OrderBookEntry& order) {
     std::vector<std::string> tokens = CSVHandler::extractTokens(order.product, '/');
     if (tokens.size() != 2) {
         throw std::invalid_argument("Invalid product format in order");
     }
     
     if (order.orderType == OrderBookType::ask) {
-        return containsAmmount(tokens[0], order.amount); // to sell we only need the selling currency quantity
+        return lockCurrency(tokens[0], order.amount); // to sell we only need the selling currency quantity
     } else if (order.orderType == OrderBookType::bid) {
         double requiredQuoteAmount = order.amount * order.price; // to buy we need the selling currency quantity, times the price per unit
-        return containsAmmount(tokens[1], requiredQuoteAmount);
+        return lockCurrency(tokens[1], requiredQuoteAmount);
+    }
+    return false;
+}
+
+bool Wallet::lockCurrency(const std::string& type, double amount) {
+    if (containsAmmount(type, amount)) {
+        currencies[type] -= amount;
+        locked[type] += amount;
+        return true;
+    }
+    return false;
+}
+
+bool Wallet::cancelOrder(OrderBookEntry& order) {
+    std::vector<std::string> tokens = CSVHandler::extractTokens(order.product, '/');
+    if (tokens.size() != 2) {
+        throw std::invalid_argument("Invalid product format in order");
+    }
+    
+    if (order.orderType == OrderBookType::ask) {
+        return unlockCurrency(tokens[0], order.amount); // unlock the selling currency quantity
+    } else if (order.orderType == OrderBookType::bid) {
+        double requiredQuoteAmount = order.amount * order.price; // unlock the selling currency quantity, times the price per unit
+        return unlockCurrency(tokens[1], requiredQuoteAmount);
+    }
+    return false;
+}
+
+bool Wallet::unlockCurrency(const std::string& type, double amount) {
+    if (locked[type] >= amount) {
+        locked[type] -= amount;
+        currencies[type] += amount;
+        return true;
+    }
+    return false;
+}
+
+bool Wallet::spendLocked(const std::string& type, double amount) {
+    if (locked[type] >= amount) {
+        locked[type] -= amount;
+        return true;
     }
     return false;
 }

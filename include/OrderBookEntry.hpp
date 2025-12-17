@@ -11,6 +11,7 @@ class OrderBookEntry {
         std::string product;
         OrderBookType orderType;
         std::string username;
+        std::size_t id;
         
         OrderBookEntry(double price, 
                        double amount, 
@@ -24,4 +25,7 @@ class OrderBookEntry {
         static bool compareByTimestamp(const OrderBookEntry& a, const OrderBookEntry& b);
         static bool compareByPriceAsc(OrderBookEntry* a, OrderBookEntry* b);
         static bool compareByPriceDesc(OrderBookEntry* a, OrderBookEntry* b);
+    
+    private:
+        static std::size_t nextId;
 };
