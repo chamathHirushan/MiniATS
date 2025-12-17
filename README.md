@@ -40,6 +40,7 @@ build/client
 3. **Get Information:**  
     - Check your wallet with `WALLET`.
     - View market stats using `MARKET`.
+    - View product statistics `STATS <product>`.
     - View commands `HELP`.
 
 4. **Manage Wallet:**  

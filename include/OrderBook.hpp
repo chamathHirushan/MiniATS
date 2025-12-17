@@ -45,4 +45,6 @@ class OrderBook {
 
         /** Implementation to update buyer and seller wallets based on the sale */
         void processSale(User& buyer, User& seller, const OrderBookEntry& sale);
+        /** Remove matched orders from the order book */
+        void removeMatchedOrders();
 };

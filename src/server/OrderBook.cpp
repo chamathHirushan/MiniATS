@@ -137,6 +137,7 @@ std::string OrderBook::getFilename() const {
 }
 
 std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std::string currentTimestamp, UserStore& userStore) {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
     std::vector<OrderBookEntry*> bids = getOrders(OrderBookType::bid, product);
     std::vector<OrderBookEntry*> asks = getOrders(OrderBookType::ask, product);
 
@@ -191,6 +192,7 @@ std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std:
         }
     }
     insertSales(sales);
+    removeMatchedOrders();
     return sales;
 }
 
@@ -224,4 +226,12 @@ void OrderBook::processSale(User& buyer, User& seller, const OrderBookEntry& sal
         }
     }
     sellerWallet.insertCurrency(tokens[1], totalCost);
+}
+
+void OrderBook::removeMatchedOrders() {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
+    orders.erase(std::remove_if(orders.begin(), orders.end(),
+        [](const OrderBookEntry& entry) {
+            return entry.amount <= 0.0;
+        }), orders.end());
 }

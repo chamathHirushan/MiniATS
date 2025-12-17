@@ -189,7 +189,7 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
             else if (command == "DEPOSIT" || command == "WITHDRAW") {
                 if (username.empty()) {
                     response = "ERR Login required";
-                } else {
+                } else if (tokens.size() == 3) {
                     std::string product = tokens[1];
                     std::transform(product.begin(), product.end(), product.begin(),
                        [](unsigned char c){ return std::toupper(c); });
@@ -209,28 +209,46 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                     } catch (const std::exception& e) {
                         response = "ERR Invalid amount";
                     }
+                }else {
+                    response = "ERR Invalid " + command + " command";
                 }
             }
             else if (command == "MARKET") {
                 std::ostringstream oss;
                 for (const auto& product : orderBook.getKnownProducts()) {
-                    oss << "\n Product: " << product << "\n";
+                    oss << "\n Product: " << product << "\t Best bid: "
+                        << OrderBook::getHighPrice(orderBook.getOrders(OrderBookType::bid, product))
+                        << "\t Best ask: "
+                        << OrderBook::getLowPrice(orderBook.getOrders(OrderBookType::ask, product));
+                }
+                response = oss.str();
+            }
+            else if (command == "STATS") {
+                if (tokens.size() == 2) {
+                    std::string product = tokens[1];
+                    std::transform(product.begin(), product.end(), product.begin(),
+                       [](unsigned char c){ return std::toupper(c); });
+                    std::ostringstream oss;
 
                     // ----- BIDS -----
                     std::vector<OrderBookEntry*> bids =orderBook.getOrders(OrderBookType::bid, product);
-                    oss << "  Bids: " << bids.size() << "\n";
-                    oss << "  High Bid: " << OrderBook::getHighPrice(bids) << "\n";
-                    oss << "  Avg Bid Price: " << OrderBook::getAvgPrice(bids) << "\n";
-                    oss << "  Total Bid Volume: " << OrderBook::getTotalVolume(bids) << "\n";
+                    oss << "\n  Bids \t\t\t: " << bids.size() << "\n";
+                    oss << "  High Bid \t\t: " << OrderBook::getHighPrice(bids) << "\n";
+                    oss << "  Avg Bid Price \t: " << OrderBook::getAvgPrice(bids) << "\n";
+                    oss << "  Total Bid Volume \t: " << OrderBook::getTotalVolume(bids) << "\n";
 
                     // ----- ASKS -----
                     std::vector<OrderBookEntry*> asks = orderBook.getOrders(OrderBookType::ask, product);
-                    oss << "  Asks: " << asks.size() << "\n";
-                    oss << "  Low Ask: " << OrderBook::getLowPrice(asks) << "\n";
-                    oss << "  Avg Ask Price: " << OrderBook::getAvgPrice(asks) << "\n";
-                    oss << "  Total Ask Volume: " << OrderBook::getTotalVolume(asks) << "\n";
+                    oss << "\n  Asks \t\t\t: " << asks.size() << "\n";
+                    oss << "  Low Ask \t\t: " << OrderBook::getLowPrice(asks) << "\n";
+                    oss << "  Avg Ask Price \t: " << OrderBook::getAvgPrice(asks) << "\n";
+                    oss << "  Total Ask Volume \t: " << OrderBook::getTotalVolume(asks);
+
+                    response = oss.str();
                 }
-                response = oss.str() + "\n";
+                else{
+                    response = "ERR Invalid STATS command. Usage: STATS <PRODUCT>";
+                }
             }
             else if (command == "EXIT") {
                 break;

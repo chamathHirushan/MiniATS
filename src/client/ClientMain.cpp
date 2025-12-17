@@ -44,13 +44,14 @@ void ClientMain::run() {
 
             if (userInput == "HELP" || userInput == "help") {
                 std::cout << "  Register to the platform: REGISTER <user> <password>"<<std::endl;
-                std::cout << "  Login to the platform:    LOGIN <user> <password>"<<std::endl;
-                std::cout << "  Place an order:           ASK/BID <prod> <amount> <price>"<<std::endl;
-                std::cout << "  View wallet:              WALLET"<<std::endl;
-                std::cout << "  Deposit to wallet:        DEPOSIT <prod> <amount>"<<std::endl;
-                std::cout << "  Withdraw from wallet:     WITHDRAW <prod> <amount>"<<std::endl;
-                std::cout << "  View market:              MARKET"<<std::endl;
-                std::cout << "  Exit the application:     EXIT" << std::endl;
+                std::cout << "  Login to the platform   : LOGIN <user> <password>"<<std::endl;
+                std::cout << "  Place an order          : ASK/BID <prod> <amount> <price>"<<std::endl;
+                std::cout << "  View wallet             : WALLET"<<std::endl;
+                std::cout << "  Deposit to wallet       : DEPOSIT <prod> <amount>"<<std::endl;
+                std::cout << "  Withdraw from wallet    : WITHDRAW <prod> <amount>"<<std::endl;
+                std::cout << "  View market             : MARKET"<<std::endl;
+                std::cout << "  View product statistics : STATS <prod>"<<std::endl;
+                std::cout << "  Exit the application    : EXIT" << std::endl;
                 std::cout << std::endl;
                 continue;
             }

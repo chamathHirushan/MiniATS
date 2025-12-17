@@ -29,6 +29,10 @@ bool Wallet::containsAmmount(std::string type, double amount) {
 
 std::string Wallet::toString() {
     std::string result = "Wallet contains:\n";
+    if (currencies.empty()) {
+        result += "     (empty)\n";
+        return result;
+    }
     for (const auto& pair : currencies) {
         result += "     " + pair.first + ": " + std::to_string(pair.second) + "\n";
     }
@@ -48,22 +52,4 @@ bool Wallet::canFulfillOrder(OrderBookEntry& order) {
         return containsAmmount(tokens[1], requiredQuoteAmount);
     }
     return false;
-}
-
-void Wallet::processSale(OrderBookEntry& sale) { //TODO
-    std::vector<std::string> tokens = CSVHandler::extractTokens(sale.product, '/');
-    if (tokens.size() != 2) {
-        throw std::invalid_argument("Invalid product format in sale");
-    }
-    
-    // if (sale.orderType == OrderBookType::asksale) {
-    //     // Seller side
-    //     removeCurrency(tokens[0], sale.amount); // remove the sold currency
-    //     insertCurrency(tokens[1], sale.amount * sale.price); // add the received currency
-    // } else if (sale.orderType == OrderBookType::bidsale) {
-    //     // Buyer side
-    //     double totalCost = sale.amount * sale.price;
-    //     removeCurrency(tokens[1], totalCost); // remove the spent currency
-    //     insertCurrency(tokens[0], sale.amount); // add the purchased currency
-    // }
 }
