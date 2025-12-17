@@ -5,6 +5,8 @@
 #include <mutex>
 #include "User.hpp"
 #include "UserStore.hpp"
+#include <nlohmann/json.hpp>
+#include <fstream>
 
 class OrderBook {
     public:
@@ -38,6 +40,9 @@ class OrderBook {
         
         /** match asks to bids and return a list of sales */
         std::vector<OrderBookEntry> matchAsksToBids(std::string product, std::string currentTimestamp, UserStore& userStore);
+
+        void save();
+        void load();
 
     private:
         std::string filename;

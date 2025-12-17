@@ -13,9 +13,12 @@ void ServerMain::cleanup(int signum) {
     std::cout << "\nShutting down server..." << std::endl;
     if (serverInstance != nullptr) {
         
-        //CSVHandler::usersToCSV("users.csv", serverInstance->userStore.getUsers());
         CSVHandler::entriesToCSV("sales.csv", serverInstance->orderBook.getSales());
         CSVHandler::entriesToCSV(serverInstance->orderBook.getFilename(), serverInstance->orderBook.getOrders(), false);
+        
+        serverInstance->userStore.save();
+        //serverInstance->orderBook.save();
+        
         std::cout << "Exported records successfully." << std::endl;
 
         serverInstance->isRunning = false;
@@ -36,6 +39,11 @@ void ServerMain::init() {
     try {
         // Create and bind the TCP acceptor to listen on port 5322 (IPv4) for incoming client connections
         acceptor = std::make_unique<tcp::acceptor>(io_context, tcp::endpoint(tcp::v4(), 5322));
+        
+        // Load data from persistence files
+        userStore.load();
+        //orderBook.load();
+        
     } catch (std::exception& e) {
         std::cerr << "Exception in init: " << e.what() << std::endl;
         return;

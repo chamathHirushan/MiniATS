@@ -121,3 +121,15 @@ build/client
       external/
          asio/
     ```
+
+## Download nlohmann/json.hpp for Serialization
+
+1. Download hpp from [official repository](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json.hpp).
+2. Move the downloaded file to the `include/nlohmann` directory at the root of the project.
+4. File should be located as:  
+    ```
+    root/
+      include/
+         nlohmann/
+             json.hpp
+    ```

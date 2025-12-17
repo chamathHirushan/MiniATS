@@ -30,4 +30,7 @@ class Wallet{
 
         /** Locks a specified amount of a given currency type in the wallet */
         bool lockCurrency(const std::string& type, double amount);
+
+        friend void to_json(nlohmann::json& j, const Wallet& w);
+        friend void from_json(const nlohmann::json& j, Wallet& w);
 };
