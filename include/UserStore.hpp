@@ -15,7 +15,6 @@ class UserStore {
         void save();
         void load();
 
-
     private:
         std::string filename;
         std::unordered_map<std::string, User> users;
