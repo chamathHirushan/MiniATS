@@ -51,6 +51,8 @@ void ClientMain::run() {
                 std::cout << "  Withdraw from wallet    : WITHDRAW <prod> <amount>"<<std::endl;
                 std::cout << "  View market             : MARKET"<<std::endl;
                 std::cout << "  View product statistics : STATS <prod>"<<std::endl;
+                std::cout << "  View open orders        : ORDERS"<<std::endl;
+                std::cout << "  Cancel an order         : CANCEL <order id>"<<std::endl;
                 std::cout << "  Exit the application    : EXIT" << std::endl;
                 std::cout << std::endl;
                 continue;

@@ -50,7 +50,7 @@ build/client
         <sub>Example: <code>WITHDRAW ETH 20</code></sub>
 
 5. **Manage Orders:**  
-    - Check your Orders with `ORDERS`.
+    - View open orders with `ORDERS`.
     - To Cancel an order, use `CANCEL <order id>`.    
         <sub>Example: <code>CANCEL 3500</code></sub>
 
