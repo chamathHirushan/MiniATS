@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <iostream>
 #include "UserStore.hpp"
+#include "OrderBookEntry.hpp"
 #include "User.hpp"
 
 OrderBook::OrderBook(const std::string& filename) {
@@ -248,4 +249,42 @@ void OrderBook::removeMatchedOrders() {
         [](const OrderBookEntry& entry) {
             return entry.amount <= 0.0;
         }), orders.end());
+}
+
+void OrderBook::save() {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
+    nlohmann::json j;
+    j["orders"] = orders;
+    j["finalizedSales"] = finalizedSales;
+    
+    std::ofstream outFile("orderbook.json");
+    if (outFile.is_open()) {
+        outFile << j.dump(4);
+        outFile.close();
+        std::cout << "OrderBook saved to orderbook.json" << std::endl;
+    } else {
+        std::cerr << "Unable to save OrderBook to orderbook.json" << std::endl;
+    }
+}
+
+void OrderBook::load() {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
+    std::ifstream inFile("orderbook.json");
+    if (inFile.is_open()) {
+        try {
+            nlohmann::json j;
+            inFile >> j;
+            if (j.contains("orders")) {
+                j.at("orders").get_to(orders);
+            }
+            if (j.contains("finalizedSales")) {
+                j.at("finalizedSales").get_to(finalizedSales);
+            }
+            std::cout << "OrderBook loaded from orderbook.json" << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "Error loading OrderBook: " << e.what() << std::endl;
+        }
+    } else {
+        std::cout << "No OrderBook json found, keeping existing data." << std::endl;
+    }
 }

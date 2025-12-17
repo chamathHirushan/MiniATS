@@ -21,7 +21,7 @@ class ServerMain {
         std::string getCurrentTimestamp();
 
         OrderBook orderBook{"orders.csv"};
-        UserStore userStore{"users.csv"};//TODO
+        UserStore userStore{"users.json"};
         bool isRunning = true; // Flag to control server running state
 
         static void cleanup(int signum); // Signal handler for cleanup

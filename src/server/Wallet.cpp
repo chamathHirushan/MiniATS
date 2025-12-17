@@ -1,6 +1,7 @@
 #include "Wallet.hpp"
 #include <stdexcept>
 #include "CSVHandler.hpp"
+#include <nlohmann/json.hpp>
 
 void Wallet::insertCurrency(std::string type, double amount) {
     if (amount < 0) {
@@ -98,4 +99,18 @@ bool Wallet::spendLocked(const std::string& type, double amount) {
         return true;
     }
     return false;
+}
+
+void to_json(nlohmann::json& j, const Wallet& w) {
+    j = nlohmann::json{
+        {"currencies", w.currencies},
+        {"locked", w.locked}
+    };
+}
+
+void from_json(const nlohmann::json& j, Wallet& w) {
+    if (j.contains("currencies"))
+        j.at("currencies").get_to(w.currencies);
+    if (j.contains("locked"))
+        j.at("locked").get_to(w.locked);
 }
