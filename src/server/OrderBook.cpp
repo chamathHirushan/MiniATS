@@ -29,7 +29,11 @@ std::unordered_map<OrderBookType, std::vector<OrderBookEntry*>> OrderBook::getOr
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
     // get product orders by types
     std::unordered_map<OrderBookType, std::vector<OrderBookEntry*>> filteredOrders;
-    for (OrderBookEntry& entry : orderMap[product]) {
+    auto it = orderMap.find(product);
+    if (it == orderMap.end()) {
+        return filteredOrders;
+    }
+    for (OrderBookEntry& entry : it->second) {
         if (entry.orderType == OrderBookType::bid || entry.orderType == OrderBookType::ask) {
             filteredOrders[entry.orderType].push_back(&entry);
         }
@@ -249,12 +253,25 @@ void OrderBook::processSale(User& buyer, User& seller, const OrderBookEntry& sal
     }
 }
 
-void OrderBook::removeMatchedOrders(const std::string& product) {
+void OrderBook::removeMatchedOrders(const std::string& product){
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-    orderMap[product].erase(std::remove_if(orderMap[product].begin(), orderMap[product].end(),
-        [](const OrderBookEntry& entry) {
-            return entry.amount <= 0.0;
-        }), orderMap[product].end());
+
+    auto it = orderMap.find(product);
+    if (it == orderMap.end())
+        return;
+
+    auto& orders = it->second;
+
+    orders.erase(
+        std::remove_if(
+            orders.begin(),
+            orders.end(),
+            [](const OrderBookEntry& entry) {
+                return entry.amount <= 0.0;
+            }
+        ),
+        orders.end()
+    );
 }
 
 void OrderBook::save() {
