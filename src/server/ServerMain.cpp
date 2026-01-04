@@ -186,6 +186,8 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                         }
                         orderBook.insertOrder(obe);
                         
+                        startMatchingProduct(product); // Trigger matching for the product
+
                         response = "OK " + command + " placed for " + product;
                     } catch (const std::exception& e) {
                         response = "ERR Invalid order";
@@ -339,58 +341,46 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
 
 void ServerMain::startMatching() {
     std::vector<std::string> products = orderBook.getKnownProducts();
-    std::string currentTimestamp = getCurrentTimestamp(); 
-    std::cout << "Current timestamp: " << currentTimestamp << std::endl;
-    if (products.empty()) {
-        std::cout << "No orders available yet." << std::endl;
-    }else {
-        std::cout << "Initial products : "<< std::endl;
-        for (const std::string& product : products) {
-            std::cout << "  " << product << std::endl;
+    
+    {
+        std::lock_guard<std::mutex> lock(matchingMutex);
+        for (const auto& p : products) {
+            pendingProducts.push_back(p);
         }
     }
+    
+    std::cout << "Matching engine started." << std::endl;
 
     while (isRunning) {
-        std::this_thread::sleep_for(std::chrono::seconds(10)); // Match every 10 seconds
+        std::string product;
+        {
+            std::unique_lock<std::mutex> lock(matchingMutex);
+            matchingCV.wait(lock, [this]{ return !pendingProducts.empty() || !isRunning; }); // wait for a product to be available
 
-        if (!isRunning) break;
-        currentTimestamp = getCurrentTimestamp();
-        products = orderBook.getKnownProducts();
-        int executedMatches = 0;
+            if (!isRunning) break; // exit if server is stopping
 
-        for (const std::string& product : products) {
-            std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp, userStore);
-            executedMatches += matchedSales.size();
-            // for (OrderBookEntry& sale : matchedSales) {
-            //     std::cout << "Sale: " << sale.product << " Price: " << sale.price << " Amount: " << sale.amount << std::endl;
-            // }
+            product = pendingProducts.front();
+            pendingProducts.pop_front();
         }
-        std::cout << "Matching engine executed " << executedMatches << " matches at " << currentTimestamp << std::endl;
+
+        std::string currentTimestamp = getCurrentTimestamp();
+        std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp, userStore);
+        
+        if (!matchedSales.empty()) {
+            std::cout << "Matching engine executed " << matchedSales.size() << " matches for " << product << " at " << currentTimestamp << std::endl;
+        }
     }
 }
 
-// // std::thread matchingEngine(&ServerMain::startMatching, this);
-// //     matchingEngine.detach();
-
-
-// void ServerMain::startMatchingProduct(std::string product) {
-//     while (isRunning) {
-//         std::this_thread::sleep_for(std::chrono::seconds(10)); // Match every 10 seconds
-
-//         if (!isRunning) break;
-//         int executedMatches = 0;
-
-        
-//         for (const std::string& product : products) {
-//             std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp, userStore);
-//             executedMatches += matchedSales.size();
-//             // for (OrderBookEntry& sale : matchedSales) {
-//             //     std::cout << "Sale: " << sale.product << " Price: " << sale.price << " Amount: " << sale.amount << std::endl;
-//             // }
-//         }
-//         std::cout << "Matching engine executed " << executedMatches << " matches at " << currentTimestamp << std::endl;
-//     }
-// }
+void ServerMain::startMatchingProduct(std::string product) {
+    {
+        std::lock_guard<std::mutex> lock(matchingMutex);
+        if (std::find(pendingProducts.begin(), pendingProducts.end(), product) == pendingProducts.end()) {
+            pendingProducts.push_back(product); // add only if not present
+        }
+    }
+    matchingCV.notify_one();
+}
 
 std::string ServerMain::getCurrentTimestamp() {
     std::time_t now = std::time(nullptr);

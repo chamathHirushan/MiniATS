@@ -2,10 +2,13 @@
 #include "OrderBook.hpp"
 #include <string>
 #include <vector>
+#include <deque>
 #include <memory>
 #include <asio.hpp>
 #include "UserStore.hpp"
 #include <map>
+#include <mutex>
+#include <condition_variable>
 
 using asio::ip::tcp;
 
@@ -30,4 +33,8 @@ class ServerMain {
 
         asio::io_context io_context; // ASIO IO context - platform specific interface (server side)
         std::unique_ptr<tcp::acceptor> acceptor; //// store a pointer to a acceptor that accepts incoming client connections using TCP
+
+        std::mutex matchingMutex;
+        std::condition_variable matchingCV; // Condition variable for matching engine thread
+        std::deque<std::string> pendingProducts; // pending products for matching
 };
