@@ -115,9 +115,22 @@ double OrderBook::getTotalVolume(const std::vector<OrderBookEntry*>& orders) {
 void OrderBook::insertOrder(const OrderBookEntry& order) {
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
     auto& orderList = orderMap[order.product];
-    orderList.push_back(order);
-    userOrders[order.username].push_back(&orderList.back());
-    std::sort(orderList.begin(), orderList.end(), OrderBookEntry::compareByTimestamp);
+
+    // 1. FAST PATH: If the list is empty or the new order is the newest
+    if (orderList.empty() || order.timestamp >= orderList.back().timestamp) {
+        orderList.push_back(order);
+        userOrders[order.username].push_back(&orderList.back());
+        return;
+    }
+
+    // 2. SLOW PATH: The order is "late" (older timestamp).
+    // Scan the list to find where it belongs.
+    auto it = orderList.begin();
+    while (it != orderList.end() && it->timestamp <= order.timestamp) {
+        ++it;
+    }
+    auto newIt = orderList.insert(it, order);
+    userOrders[order.username].push_back(&(*newIt));
 }
 
 std::vector<OrderBookEntry> OrderBook::getAllOrders() {
@@ -152,26 +165,46 @@ std::vector<OrderBookEntry> OrderBook::getSales() {
     return finalizedSales;
 }
 
-bool OrderBook::removeOrderById(std::size_t id){
+bool OrderBook::removeOrderById(std::string username, std::size_t id){
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
 
-    for (auto& [product, orders] : orderMap) {
-        auto it = std::find_if(
-            orders.begin(),
-            orders.end(),
-            [id](const OrderBookEntry& entry) {
-                return entry.id == id;
-            }
-        );
+    auto userIt = userOrders.find(username);
+    if (userIt == userOrders.end()) {
+        return false;
+    }
 
-        if (it != orders.end()) {
-            std::string username = it->username;
-            removeFromUserIndex(username, id);
-            orders.erase(it);
-            return true;
+    auto& userVec = userIt->second;
+    auto vecIt = std::find_if(userVec.begin(), userVec.end(),
+        [id](OrderBookEntry* entry) { 
+            return entry->id == id; 
+        });
+
+    if (vecIt == userVec.end()) {
+        return false;
+    }
+
+    OrderBookEntry* ptr = *vecIt;
+    std::string product = ptr->product;
+
+    // straight to the correct product list
+    if (orderMap.count(product)) {
+        auto& orders = orderMap[product];
+        
+        auto listIt = std::find_if(orders.begin(), orders.end(),
+             [id](const OrderBookEntry& entry) { 
+                 return entry.id == id; 
+             });
+        
+        if (listIt != orders.end()) {
+            orders.erase(listIt);
         }
     }
-    return false;
+    userVec.erase(vecIt);
+    if (userVec.empty()) {
+        userOrders.erase(username);
+    }
+
+    return true;
 }
 
 std::string OrderBook::getFilename() const {

@@ -240,7 +240,7 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                             }
                         }
                         if (found) {
-                            bool success= orderBook.removeOrderById(orderId);
+                            bool success= orderBook.removeOrderById(username, orderId);
                             if (success)
                                 response = "OK Order cancelled.";
                             else

@@ -38,7 +38,7 @@ class OrderBook {
         void insertSales(std::vector<OrderBookEntry>& sales);
         std::vector<OrderBookEntry> getSales();
         /** remove an order by its unique ID */
-        bool removeOrderById(std::size_t id);
+        bool removeOrderById(std::string username, std::size_t id);
         
         /** match asks to bids and return a list of sales */
         std::vector<OrderBookEntry> matchAsksToBids(std::string product, std::string currentTimestamp, UserStore& userStore);

@@ -70,7 +70,9 @@ std::unordered_map<std::string, std::vector<OrderBookEntry>> CSVHandler::readCSV
         }
     }
     csvFile.close();
-
+    for (auto& [product, product_orders] : entries) {
+        std::sort(product_orders.begin(), product_orders.end(), OrderBookEntry::compareByTimestamp);
+    }
     return entries;
 }
 
