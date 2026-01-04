@@ -14,7 +14,7 @@ void ServerMain::cleanup(int signum) {
     if (serverInstance != nullptr) {
         
         CSVHandler::entriesToCSV("sales.csv", serverInstance->orderBook.getSales());
-        CSVHandler::entriesToCSV(serverInstance->orderBook.getFilename(), serverInstance->orderBook.getOrders(), false);
+        CSVHandler::entriesToCSV(serverInstance->orderBook.getFilename(), serverInstance->orderBook.getAllOrders(), false);
         
         serverInstance->userStore.save();
         //serverInstance->orderBook.save();
@@ -198,19 +198,17 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                     response = "ERR Login required";
                 } else {
                     std::ostringstream oss;
-                    std::vector<OrderBookEntry> orders = orderBook.getOrders();
+                    std::vector<OrderBookEntry> orders = orderBook.getOrdersForUser(username);
                     int count = 0;
                     oss << "Ongoing orders of user " << username << ":\n";
                     for (const auto& order : orders) {
-                        if (order.username == username) {
-                            count++;
-                            oss << " ID: " << order.id
-                                << " | " << OrderBookEntry::orderTypeToString(order.orderType)
-                                << " | " << order.product
-                                << " | Amount: " << order.amount
-                                << " | Price: " << order.price
-                                << " | Timestamp: " << order.timestamp << "\n";
-                        }
+                        count++;
+                        oss << " ID: " << order.id
+                            << " | " << OrderBookEntry::orderTypeToString(order.orderType)
+                            << " | " << order.product
+                            << " | Amount: " << order.amount
+                            << " | Price: " << order.price
+                            << " | Timestamp: " << order.timestamp << "\n";
                     }
                     if (count == 0) {
                         oss << "    (no ongoing orders)";
@@ -225,18 +223,21 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                     int orderId = 0;
                     try {
                         orderId = std::stoi(tokens[1]);
-                        std::vector<OrderBookEntry> orders = orderBook.getOrders();
+                        std::vector<OrderBookEntry> orders = orderBook.getOrdersForUser(username);
                         bool found = false;
                         for (auto& order : orders) {
-                            if (orderId == order.id && order.username == username) {
+                            if (orderId == order.id) {
                                 found = true;
                                 userStore.getUser(username).getWallet().cancelOrder(order);
                                 break;
                             }
                         }
                         if (found) {
-                            orderBook.removeOrderById(orderId);
-                            response = "OK Order cancelled.";
+                            bool success= orderBook.removeOrderById(orderId);
+                            if (success)
+                                response = "OK Order cancelled.";
+                            else
+                                response = "ERR Order not found.";
                         } else {
                             response = "ERR Order not found or not owned by user.";
                         }

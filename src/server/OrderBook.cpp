@@ -118,7 +118,7 @@ void OrderBook::insertOrder(const OrderBookEntry& order) {
     std::sort(orderMap[order.product].begin(), orderMap[order.product].end(), OrderBookEntry::compareByTimestamp);
 }
 
-std::vector<OrderBookEntry> OrderBook::getOrders() {
+std::vector<OrderBookEntry> OrderBook::getAllOrders() {
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
     
     std::vector<OrderBookEntry> allOrders;
@@ -126,6 +126,21 @@ std::vector<OrderBookEntry> OrderBook::getOrders() {
         allOrders.insert(allOrders.end(), pair.second.begin(), pair.second.end());
     }
     return allOrders;
+}
+
+std::vector<OrderBookEntry> OrderBook::getOrdersForUser(const std::string& username)
+{
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
+    std::vector<OrderBookEntry> result;
+
+    for (const auto& [product, orders] : orderMap) {
+        for (const auto& order : orders) {
+            if (order.username == username) {
+                result.push_back(order);
+            }
+        }
+    }
+    return result;
 }
 
 void OrderBook::insertSales(std::vector<OrderBookEntry>& sales) {
@@ -138,16 +153,24 @@ std::vector<OrderBookEntry> OrderBook::getSales() {
     return finalizedSales;
 }
 
-void OrderBook::removeOrderById(std::size_t id) {
+bool OrderBook::removeOrderById(std::size_t id){
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-    
-    for (auto& pair : orderMap) {
-        auto& orders = pair.second;
-        orders.erase(std::remove_if(orders.begin(), orders.end(),
+
+    for (auto& [product, orders] : orderMap) {
+        auto it = std::find_if(
+            orders.begin(),
+            orders.end(),
             [id](const OrderBookEntry& entry) {
                 return entry.id == id;
-            }), orders.end());
+            }
+        );
+
+        if (it != orders.end()) {
+            orders.erase(it);
+            return true;
+        }
     }
+    return false;
 }
 
 std::string OrderBook::getFilename() const {
