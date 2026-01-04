@@ -284,10 +284,11 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
             else if (command == "MARKET") {
                 std::ostringstream oss;
                 for (const auto& product : orderBook.getKnownProducts()) {
+                    std::unordered_map<OrderBookType, std::vector<OrderBookEntry*>> productOrders = orderBook.getOrders(product);
                     oss << "\n Product: " << product << "\t Best bid: "
-                        << OrderBook::getHighPrice(orderBook.getOrders(OrderBookType::bid, product))
+                        << OrderBook::getHighPrice(productOrders[OrderBookType::bid])
                         << "\t Best ask: "
-                        << OrderBook::getLowPrice(orderBook.getOrders(OrderBookType::ask, product));
+                        << OrderBook::getLowPrice(productOrders[OrderBookType::ask]);
                 }
                 response = oss.str();
             }
@@ -298,15 +299,17 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                        [](unsigned char c){ return std::toupper(c); });
                     std::ostringstream oss;
 
+                    std::unordered_map<OrderBookType, std::vector<OrderBookEntry*>> productOrders = orderBook.getOrders(product);
+
                     // ----- BIDS -----
-                    std::vector<OrderBookEntry*> bids =orderBook.getOrders(OrderBookType::bid, product);
+                    std::vector<OrderBookEntry*> bids = productOrders[OrderBookType::bid];
                     oss << "\n  Bids \t\t\t: " << bids.size() << "\n";
                     oss << "  High Bid \t\t: " << OrderBook::getHighPrice(bids) << "\n";
                     oss << "  Avg Bid Price \t: " << OrderBook::getAvgPrice(bids) << "\n";
                     oss << "  Total Bid Volume \t: " << OrderBook::getTotalVolume(bids) << "\n";
 
                     // ----- ASKS -----
-                    std::vector<OrderBookEntry*> asks = orderBook.getOrders(OrderBookType::ask, product);
+                    std::vector<OrderBookEntry*> asks = productOrders[OrderBookType::ask];
                     oss << "\n  Asks \t\t\t: " << asks.size() << "\n";
                     oss << "  Low Ask \t\t: " << OrderBook::getLowPrice(asks) << "\n";
                     oss << "  Avg Ask Price \t: " << OrderBook::getAvgPrice(asks) << "\n";
@@ -364,6 +367,29 @@ void ServerMain::startMatching() {
         std::cout << "Matching engine executed " << executedMatches << " matches at " << currentTimestamp << std::endl;
     }
 }
+
+// // std::thread matchingEngine(&ServerMain::startMatching, this);
+// //     matchingEngine.detach();
+
+
+// void ServerMain::startMatchingProduct(std::string product) {
+//     while (isRunning) {
+//         std::this_thread::sleep_for(std::chrono::seconds(10)); // Match every 10 seconds
+
+//         if (!isRunning) break;
+//         int executedMatches = 0;
+
+        
+//         for (const std::string& product : products) {
+//             std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp, userStore);
+//             executedMatches += matchedSales.size();
+//             // for (OrderBookEntry& sale : matchedSales) {
+//             //     std::cout << "Sale: " << sale.product << " Price: " << sale.price << " Amount: " << sale.amount << std::endl;
+//             // }
+//         }
+//         std::cout << "Matching engine executed " << executedMatches << " matches at " << currentTimestamp << std::endl;
+//     }
+// }
 
 std::string ServerMain::getCurrentTimestamp() {
     std::time_t now = std::time(nullptr);

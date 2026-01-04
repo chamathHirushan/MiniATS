@@ -6,7 +6,7 @@
 class CSVHandler {
     public:
         CSVHandler()= default;
-        static std::vector<OrderBookEntry> readCSV(const std::string& filename);
+        static std::unordered_map<std::string, std::vector<OrderBookEntry>> readCSV(const std::string& filename);
         static void entriesToCSV(const std::string& filename, const std::vector<OrderBookEntry>& entries, bool append=true);
         static std::vector<std::string> extractTokens(const std::string& csvLine, char separator);
 

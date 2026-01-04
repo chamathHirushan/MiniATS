@@ -18,6 +18,7 @@ class ServerMain {
     private:
         void handleClient(std::shared_ptr<tcp::socket> clientSocket);
         void startMatching();
+        void startMatchingProduct(std::string product);
         std::string getCurrentTimestamp();
 
         OrderBook orderBook{"orders.csv"};
