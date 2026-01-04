@@ -114,8 +114,10 @@ double OrderBook::getTotalVolume(const std::vector<OrderBookEntry*>& orders) {
 
 void OrderBook::insertOrder(const OrderBookEntry& order) {
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-    orderMap[order.product].push_back(order);
-    std::sort(orderMap[order.product].begin(), orderMap[order.product].end(), OrderBookEntry::compareByTimestamp);
+    auto& orderList = orderMap[order.product];
+    orderList.push_back(order);
+    userOrders[order.username].push_back(&orderList.back());
+    std::sort(orderList.begin(), orderList.end(), OrderBookEntry::compareByTimestamp);
 }
 
 std::vector<OrderBookEntry> OrderBook::getAllOrders() {
@@ -128,16 +130,13 @@ std::vector<OrderBookEntry> OrderBook::getAllOrders() {
     return allOrders;
 }
 
-std::vector<OrderBookEntry> OrderBook::getOrdersForUser(const std::string& username)
-{
+std::vector<OrderBookEntry> OrderBook::getOrdersForUser(const std::string& username) {
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
     std::vector<OrderBookEntry> result;
 
-    for (const auto& [product, orders] : orderMap) {
-        for (const auto& order : orders) {
-            if (order.username == username) {
-                result.push_back(order);
-            }
+    if (userOrders.count(username)) {
+        for (OrderBookEntry* ptr : userOrders[username]) {
+            result.push_back(*ptr);
         }
     }
     return result;
@@ -166,6 +165,8 @@ bool OrderBook::removeOrderById(std::size_t id){
         );
 
         if (it != orders.end()) {
+            std::string username = it->username;
+            removeFromUserIndex(username, id);
             orders.erase(it);
             return true;
         }
@@ -278,23 +279,34 @@ void OrderBook::processSale(User& buyer, User& seller, const OrderBookEntry& sal
 
 void OrderBook::removeMatchedOrders(const std::string& product){
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
+    if (orderMap.find(product) == orderMap.end()) return;
 
-    auto it = orderMap.find(product);
-    if (it == orderMap.end())
-        return;
+    auto& orders = orderMap[product]; 
+    for (auto it = orders.begin(); it != orders.end(); ) {
+        if (it->amount <= 0.0) {    // If the order is fully filled
+            removeFromUserIndex(it->username, it->id);
+            it = orders.erase(it); 
+        } else {
+            ++it;
+        }
+    }
+}
 
-    auto& orders = it->second;
-
-    orders.erase(
-        std::remove_if(
-            orders.begin(),
-            orders.end(),
-            [](const OrderBookEntry& entry) {
-                return entry.amount <= 0.0;
-            }
-        ),
-        orders.end()
-    );
+void OrderBook::removeFromUserIndex(const std::string& username, std::size_t orderId) {
+    if (userOrders.find(username) != userOrders.end()) {
+        auto& userVec = userOrders[username];
+        
+        userVec.erase(
+            std::remove_if(userVec.begin(), userVec.end(),
+                [orderId](OrderBookEntry* entry) {
+                    return entry->id == orderId; 
+                }),
+            userVec.end());
+        
+        if (userVec.empty()) {
+            userOrders.erase(username);
+        }
+    }
 }
 
 void OrderBook::save() {

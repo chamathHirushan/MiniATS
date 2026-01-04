@@ -49,8 +49,9 @@ class OrderBook {
     private:
         std::string filename;
         std::vector<OrderBookEntry> finalizedSales;
-        //std::vector<OrderBookEntry> orders;
         std::unordered_map<std::string, std::vector<OrderBookEntry>> orderMap;
+
+        std::unordered_map<std::string, std::vector<OrderBookEntry*>> userOrders; // for fast user lookups
 
         mutable std::recursive_mutex ordersMutex; // Mutex lock to protect the orders,finalizedSales when multiple threads access
 
@@ -58,4 +59,6 @@ class OrderBook {
         void processSale(User& buyer, User& seller, const OrderBookEntry& sale, double bid_price, double ask_price);
         /** Remove matched orders from the order book */
         void removeMatchedOrders(const std::string& product);
+        /** Removes an order from the userOrders map safely */
+        void removeFromUserIndex(const std::string& username, std::size_t orderId);
 };
