@@ -7,6 +7,7 @@
 #include "UserStore.hpp"
 #include <nlohmann/json.hpp>
 #include <fstream>
+#include <unordered_map>
 
 class OrderBook {
     public:
@@ -15,7 +16,7 @@ class OrderBook {
         /** return a vector of all known products */
         std::vector<std::string> getKnownProducts();
         /** return all orders of specified type, product, and timestamp */
-        std::vector<OrderBookEntry*> getOrders(OrderBookType type, const std::string& product);
+        std::unordered_map<OrderBookType, std::vector<OrderBookEntry*>> getOrders(const std::string& product);
 
         static double getHighPrice(const std::vector<OrderBookEntry*>& orders);
         static double getLowPrice(const std::vector<OrderBookEntry*>& orders);
@@ -31,12 +32,13 @@ class OrderBook {
 
         /** insert a new order into the order book */
         void insertOrder(const OrderBookEntry& order);
-        std::vector<OrderBookEntry> getOrders();
+        std::vector<OrderBookEntry> getAllOrders();
+        std::vector<OrderBookEntry> getOrdersForUser(const std::string& username);
         /** insert new sales into the finalized sales book */
         void insertSales(std::vector<OrderBookEntry>& sales);
         std::vector<OrderBookEntry> getSales();
         /** remove an order by its unique ID */
-        void removeOrderById(std::size_t id);
+        bool removeOrderById(std::size_t id);
         
         /** match asks to bids and return a list of sales */
         std::vector<OrderBookEntry> matchAsksToBids(std::string product, std::string currentTimestamp, UserStore& userStore);
@@ -47,11 +49,13 @@ class OrderBook {
     private:
         std::string filename;
         std::vector<OrderBookEntry> finalizedSales;
-        std::vector<OrderBookEntry> orders;
+        //std::vector<OrderBookEntry> orders;
+        std::unordered_map<std::string, std::vector<OrderBookEntry>> orderMap;
+
         mutable std::recursive_mutex ordersMutex; // Mutex lock to protect the orders,finalizedSales when multiple threads access
 
         /** Implementation to update buyer and seller wallets based on the sale */
         void processSale(User& buyer, User& seller, const OrderBookEntry& sale, double bid_price, double ask_price);
         /** Remove matched orders from the order book */
-        void removeMatchedOrders();
+        void removeMatchedOrders(const std::string& product);
 };

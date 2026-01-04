@@ -14,7 +14,7 @@ void ServerMain::cleanup(int signum) {
     if (serverInstance != nullptr) {
         
         CSVHandler::entriesToCSV("sales.csv", serverInstance->orderBook.getSales());
-        CSVHandler::entriesToCSV(serverInstance->orderBook.getFilename(), serverInstance->orderBook.getOrders(), false);
+        CSVHandler::entriesToCSV(serverInstance->orderBook.getFilename(), serverInstance->orderBook.getAllOrders(), false);
         
         serverInstance->userStore.save();
         //serverInstance->orderBook.save();
@@ -186,6 +186,8 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                         }
                         orderBook.insertOrder(obe);
                         
+                        startMatchingProduct(product); // Trigger matching for the product
+
                         response = "OK " + command + " placed for " + product;
                     } catch (const std::exception& e) {
                         response = "ERR Invalid order";
@@ -198,19 +200,17 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                     response = "ERR Login required";
                 } else {
                     std::ostringstream oss;
-                    std::vector<OrderBookEntry> orders = orderBook.getOrders();
+                    std::vector<OrderBookEntry> orders = orderBook.getOrdersForUser(username);
                     int count = 0;
                     oss << "Ongoing orders of user " << username << ":\n";
                     for (const auto& order : orders) {
-                        if (order.username == username) {
-                            count++;
-                            oss << " ID: " << order.id
-                                << " | " << OrderBookEntry::orderTypeToString(order.orderType)
-                                << " | " << order.product
-                                << " | Amount: " << order.amount
-                                << " | Price: " << order.price
-                                << " | Timestamp: " << order.timestamp << "\n";
-                        }
+                        count++;
+                        oss << " ID: " << order.id
+                            << " | " << OrderBookEntry::orderTypeToString(order.orderType)
+                            << " | " << order.product
+                            << " | Amount: " << order.amount
+                            << " | Price: " << order.price
+                            << " | Timestamp: " << order.timestamp << "\n";
                     }
                     if (count == 0) {
                         oss << "    (no ongoing orders)";
@@ -225,18 +225,21 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                     int orderId = 0;
                     try {
                         orderId = std::stoi(tokens[1]);
-                        std::vector<OrderBookEntry> orders = orderBook.getOrders();
+                        std::vector<OrderBookEntry> orders = orderBook.getOrdersForUser(username);
                         bool found = false;
                         for (auto& order : orders) {
-                            if (orderId == order.id && order.username == username) {
+                            if (orderId == order.id) {
                                 found = true;
                                 userStore.getUser(username).getWallet().cancelOrder(order);
                                 break;
                             }
                         }
                         if (found) {
-                            orderBook.removeOrderById(orderId);
-                            response = "OK Order cancelled.";
+                            bool success= orderBook.removeOrderById(orderId);
+                            if (success)
+                                response = "OK Order cancelled.";
+                            else
+                                response = "ERR Order not found.";
                         } else {
                             response = "ERR Order not found or not owned by user.";
                         }
@@ -284,10 +287,11 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
             else if (command == "MARKET") {
                 std::ostringstream oss;
                 for (const auto& product : orderBook.getKnownProducts()) {
+                    std::unordered_map<OrderBookType, std::vector<OrderBookEntry*>> productOrders = orderBook.getOrders(product);
                     oss << "\n Product: " << product << "\t Best bid: "
-                        << OrderBook::getHighPrice(orderBook.getOrders(OrderBookType::bid, product))
+                        << OrderBook::getHighPrice(productOrders[OrderBookType::bid])
                         << "\t Best ask: "
-                        << OrderBook::getLowPrice(orderBook.getOrders(OrderBookType::ask, product));
+                        << OrderBook::getLowPrice(productOrders[OrderBookType::ask]);
                 }
                 response = oss.str();
             }
@@ -298,15 +302,17 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                        [](unsigned char c){ return std::toupper(c); });
                     std::ostringstream oss;
 
+                    std::unordered_map<OrderBookType, std::vector<OrderBookEntry*>> productOrders = orderBook.getOrders(product);
+
                     // ----- BIDS -----
-                    std::vector<OrderBookEntry*> bids =orderBook.getOrders(OrderBookType::bid, product);
+                    std::vector<OrderBookEntry*> bids = productOrders[OrderBookType::bid];
                     oss << "\n  Bids \t\t\t: " << bids.size() << "\n";
                     oss << "  High Bid \t\t: " << OrderBook::getHighPrice(bids) << "\n";
                     oss << "  Avg Bid Price \t: " << OrderBook::getAvgPrice(bids) << "\n";
                     oss << "  Total Bid Volume \t: " << OrderBook::getTotalVolume(bids) << "\n";
 
                     // ----- ASKS -----
-                    std::vector<OrderBookEntry*> asks = orderBook.getOrders(OrderBookType::ask, product);
+                    std::vector<OrderBookEntry*> asks = productOrders[OrderBookType::ask];
                     oss << "\n  Asks \t\t\t: " << asks.size() << "\n";
                     oss << "  Low Ask \t\t: " << OrderBook::getLowPrice(asks) << "\n";
                     oss << "  Avg Ask Price \t: " << OrderBook::getAvgPrice(asks) << "\n";
@@ -335,34 +341,47 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
 
 void ServerMain::startMatching() {
     std::vector<std::string> products = orderBook.getKnownProducts();
-    std::string currentTimestamp = getCurrentTimestamp(); 
-    std::cout << "Current timestamp: " << currentTimestamp << std::endl;
-    if (products.empty()) {
-        std::cout << "No orders available yet." << std::endl;
-    }else {
-        std::cout << "Initial products : "<< std::endl;
-        for (const std::string& product : products) {
-            std::cout << "  " << product << std::endl;
+    
+    {
+        std::lock_guard<std::mutex> lock(matchingMutex);
+        for (const auto& p : products) {
+            pendingProducts.push_back(p);
         }
     }
+    
+    std::cout << "Matching engine started." << std::endl;
 
     while (isRunning) {
-        std::this_thread::sleep_for(std::chrono::seconds(10)); // Match every 10 seconds
+        std::string product;
+        {
+            std::unique_lock<std::mutex> lock(matchingMutex);
+            matchingCV.wait(lock, [this]{ return !pendingProducts.empty() || !isRunning; }); // wait for a product to be available
 
-        if (!isRunning) break;
-        currentTimestamp = getCurrentTimestamp();
-        products = orderBook.getKnownProducts();
-        int executedMatches = 0;
+            if (!isRunning) break; // exit if server is stopping
 
-        for (const std::string& product : products) {
-            std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp, userStore);
-            executedMatches += matchedSales.size();
-            // for (OrderBookEntry& sale : matchedSales) {
-            //     std::cout << "Sale: " << sale.product << " Price: " << sale.price << " Amount: " << sale.amount << std::endl;
-            // }
+            product = pendingProducts.front();
+            pendingProducts.pop_front();
         }
-        std::cout << "Matching engine executed " << executedMatches << " matches at " << currentTimestamp << std::endl;
+
+        std::thread([this, product]() {
+            std::string currentTimestamp = getCurrentTimestamp();
+            std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp, userStore);
+            
+            if (!matchedSales.empty()) {
+                std::cout << "Matching engine executed " << matchedSales.size() << " matches for " << product << " at " << currentTimestamp << std::endl;
+            }
+        }).detach();
     }
+}
+
+void ServerMain::startMatchingProduct(std::string product) {
+    {
+        std::lock_guard<std::mutex> lock(matchingMutex);
+        if (std::find(pendingProducts.begin(), pendingProducts.end(), product) == pendingProducts.end()) {
+            pendingProducts.push_back(product); // add only if not present
+        }
+    }
+    matchingCV.notify_one();
 }
 
 std::string ServerMain::getCurrentTimestamp() {

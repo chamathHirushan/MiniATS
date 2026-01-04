@@ -11,7 +11,7 @@
 
 OrderBook::OrderBook(const std::string& filename) {
     // Load entries from the CSV file
-    orders = CSVHandler::readCSV(filename);
+    orderMap = CSVHandler::readCSV(filename);
     this->filename = filename;
 }
 
@@ -19,23 +19,23 @@ std::vector<std::string> OrderBook::getKnownProducts() {
     std::lock_guard<std::recursive_mutex> lock(ordersMutex); 
     // Implementation to extract known products from entries
     std::vector<std::string> products;
-    std::map<std::string, bool> productMap;
-    for (const OrderBookEntry& entry : orders) {
-        productMap[entry.product] = true;
-    }
-    for (const auto& pair : productMap) {
+    for (const auto& pair : orderMap) {
         products.push_back(pair.first);
     }
     return products;
 }
 
-std::vector<OrderBookEntry*> OrderBook::getOrders(OrderBookType type, const std::string& product) {
+std::unordered_map<OrderBookType, std::vector<OrderBookEntry*>> OrderBook::getOrders(const std::string& product) {
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-    // Implementation to filter entries based on type, product
-    std::vector<OrderBookEntry*> filteredOrders;
-    for (OrderBookEntry& entry : orders) {
-        if (entry.orderType == type && entry.product == product) {
-            filteredOrders.push_back(&entry);
+    // get product orders by types
+    std::unordered_map<OrderBookType, std::vector<OrderBookEntry*>> filteredOrders;
+    auto it = orderMap.find(product);
+    if (it == orderMap.end()) {
+        return filteredOrders;
+    }
+    for (OrderBookEntry& entry : it->second) {
+        if (entry.orderType == OrderBookType::bid || entry.orderType == OrderBookType::ask) {
+            filteredOrders[entry.orderType].push_back(&entry);
         }
     }
 
@@ -84,43 +84,63 @@ double OrderBook::getTotalVolume(const std::vector<OrderBookEntry*>& orders) {
     return totalVolume;
 }
 
-std::string OrderBook::getEarliestTimestamp() {
-    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-    if (orders.empty()) {
-        return "";
-    }
-    std::string earliest = orders[0].timestamp;
+// std::string OrderBook::getEarliestTimestamp() {
+//     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
+//     if (orders.empty()) {
+//         return "";
+//     }
+//     std::string earliest = orders[0].timestamp;
     
-    for (const OrderBookEntry& e : orders) {
-        if (e.timestamp < earliest) {
-            earliest = e.timestamp;
-        }
-    }
-    return earliest;
-}
+//     for (const OrderBookEntry& e : orders) {
+//         if (e.timestamp < earliest) {
+//             earliest = e.timestamp;
+//         }
+//     }
+//     return earliest;
+// }
 
-std::string OrderBook::getNextTimestamp(const std::string& timestamp) {
-    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-    std::string nextTimestamp = "";
-    for (const OrderBookEntry& e : orders) {
-        if (e.timestamp > timestamp) {
-            if (nextTimestamp == "" || e.timestamp < nextTimestamp) {
-                nextTimestamp = e.timestamp;
-            }
-        }
-    }
-    return nextTimestamp;
-}
+// std::string OrderBook::getNextTimestamp(const std::string& timestamp) {
+//     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
+//     std::string nextTimestamp = "";
+//     for (const OrderBookEntry& e : orders) {
+//         if (e.timestamp > timestamp) {
+//             if (nextTimestamp == "" || e.timestamp < nextTimestamp) {
+//                 nextTimestamp = e.timestamp;
+//             }
+//         }
+//     }
+//     return nextTimestamp;
+// }
 
 void OrderBook::insertOrder(const OrderBookEntry& order) {
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-    orders.push_back(order);
-    std::sort(orders.begin(), orders.end(), OrderBookEntry::compareByTimestamp);
+    orderMap[order.product].push_back(order);
+    std::sort(orderMap[order.product].begin(), orderMap[order.product].end(), OrderBookEntry::compareByTimestamp);
 }
 
-std::vector<OrderBookEntry> OrderBook::getOrders() {
+std::vector<OrderBookEntry> OrderBook::getAllOrders() {
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-    return orders;
+    
+    std::vector<OrderBookEntry> allOrders;
+    for (const auto& pair : orderMap) {
+        allOrders.insert(allOrders.end(), pair.second.begin(), pair.second.end());
+    }
+    return allOrders;
+}
+
+std::vector<OrderBookEntry> OrderBook::getOrdersForUser(const std::string& username)
+{
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
+    std::vector<OrderBookEntry> result;
+
+    for (const auto& [product, orders] : orderMap) {
+        for (const auto& order : orders) {
+            if (order.username == username) {
+                result.push_back(order);
+            }
+        }
+    }
+    return result;
 }
 
 void OrderBook::insertSales(std::vector<OrderBookEntry>& sales) {
@@ -133,12 +153,24 @@ std::vector<OrderBookEntry> OrderBook::getSales() {
     return finalizedSales;
 }
 
-void OrderBook::removeOrderById(std::size_t id) {
+bool OrderBook::removeOrderById(std::size_t id){
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-    orders.erase(std::remove_if(orders.begin(), orders.end(),
-        [id](const OrderBookEntry& entry) {
-            return entry.id == id;
-        }), orders.end());
+
+    for (auto& [product, orders] : orderMap) {
+        auto it = std::find_if(
+            orders.begin(),
+            orders.end(),
+            [id](const OrderBookEntry& entry) {
+                return entry.id == id;
+            }
+        );
+
+        if (it != orders.end()) {
+            orders.erase(it);
+            return true;
+        }
+    }
+    return false;
 }
 
 std::string OrderBook::getFilename() const {
@@ -147,8 +179,9 @@ std::string OrderBook::getFilename() const {
 
 std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std::string currentTimestamp, UserStore& userStore) {
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-    std::vector<OrderBookEntry*> bids = getOrders(OrderBookType::bid, product);
-    std::vector<OrderBookEntry*> asks = getOrders(OrderBookType::ask, product);
+    std::unordered_map<OrderBookType, std::vector<OrderBookEntry*>> productOrders = getOrders(product);
+    std::vector<OrderBookEntry*> bids = productOrders[OrderBookType::bid];
+    std::vector<OrderBookEntry*> asks = productOrders[OrderBookType::ask];
 
     std::vector<OrderBookEntry> sales;
 
@@ -201,7 +234,7 @@ std::vector<OrderBookEntry> OrderBook::matchAsksToBids(std::string product, std:
         }
     }
     insertSales(sales);
-    removeMatchedOrders();
+    removeMatchedOrders(product);
     return sales;
 }
 
@@ -243,18 +276,31 @@ void OrderBook::processSale(User& buyer, User& seller, const OrderBookEntry& sal
     }
 }
 
-void OrderBook::removeMatchedOrders() {
+void OrderBook::removeMatchedOrders(const std::string& product){
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-    orders.erase(std::remove_if(orders.begin(), orders.end(),
-        [](const OrderBookEntry& entry) {
-            return entry.amount <= 0.0;
-        }), orders.end());
+
+    auto it = orderMap.find(product);
+    if (it == orderMap.end())
+        return;
+
+    auto& orders = it->second;
+
+    orders.erase(
+        std::remove_if(
+            orders.begin(),
+            orders.end(),
+            [](const OrderBookEntry& entry) {
+                return entry.amount <= 0.0;
+            }
+        ),
+        orders.end()
+    );
 }
 
 void OrderBook::save() {
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
     nlohmann::json j;
-    j["orders"] = orders;
+    j["orderMap"] = orderMap;
     j["finalizedSales"] = finalizedSales;
     
     std::ofstream outFile("orderbook.json");
@@ -274,8 +320,8 @@ void OrderBook::load() {
         try {
             nlohmann::json j;
             inFile >> j;
-            if (j.contains("orders")) {
-                j.at("orders").get_to(orders);
+            if (j.contains("orderMap")) {
+                j.at("orderMap").get_to(orderMap);
             }
             if (j.contains("finalizedSales")) {
                 j.at("finalizedSales").get_to(finalizedSales);

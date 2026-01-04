@@ -51,8 +51,8 @@ OrderBookEntry CSVHandler::parseLine(const std::vector<std::string>& tokens) {
     return entry;
 }
 
-std::vector<OrderBookEntry> CSVHandler::readCSV(const std::string& filename) {
-    std::vector<OrderBookEntry> entries;
+std::unordered_map<std::string, std::vector<OrderBookEntry>> CSVHandler::readCSV(const std::string& filename) {
+    std::unordered_map<std::string, std::vector<OrderBookEntry>> entries;
     // Implementation for reading CSV file and populating entries
     std::ifstream csvFile{filename};
     std::string line;
@@ -62,7 +62,7 @@ std::vector<OrderBookEntry> CSVHandler::readCSV(const std::string& filename) {
             std::vector<std::string> tokens = extractTokens(line);
             try{
                 OrderBookEntry entry = parseLine(tokens);
-                entries.push_back(entry);
+                entries[entry.product].push_back(entry);
             } catch(std::exception& e) {
                 std::cout << "Error parsing line. Skipping..." << e.what() << std::endl;
                 continue;
