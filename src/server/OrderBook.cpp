@@ -1,5 +1,6 @@
 #include "OrderBook.hpp"
 #include <vector>
+#include <list>
 #include <string>
 #include "CSVHandler.hpp"
 #include <map>
@@ -326,8 +327,9 @@ void OrderBook::removeMatchedOrders(const std::string& product){
 }
 
 void OrderBook::removeFromUserIndex(const std::string& username, std::size_t orderId) {
-    if (userOrders.find(username) != userOrders.end()) {
-        auto& userVec = userOrders[username];
+    auto it = userOrders.find(username);
+    if (it != userOrders.end()) {
+        auto& userVec = it->second;
         
         userVec.erase(
             std::remove_if(userVec.begin(), userVec.end(),
@@ -337,7 +339,7 @@ void OrderBook::removeFromUserIndex(const std::string& username, std::size_t ord
             userVec.end());
         
         if (userVec.empty()) {
-            userOrders.erase(username);
+            userOrders.erase(it);
         }
     }
 }

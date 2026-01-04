@@ -1,6 +1,7 @@
 #pragma once
 #include "OrderBookEntry.hpp"
 #include <vector>
+#include <list>
 #include <string>
 #include <mutex>
 #include "User.hpp"
@@ -49,7 +50,7 @@ class OrderBook {
     private:
         std::string filename;
         std::vector<OrderBookEntry> finalizedSales;
-        std::unordered_map<std::string, std::vector<OrderBookEntry>> orderMap;
+        std::unordered_map<std::string, std::list<OrderBookEntry>> orderMap;
 
         std::unordered_map<std::string, std::vector<OrderBookEntry*>> userOrders; // for fast user lookups
 
