@@ -22,6 +22,11 @@ void ServerMain::cleanup(int signum) {
         std::cout << "Exported records successfully." << std::endl;
 
         serverInstance->isRunning = false;
+        for (std::thread& t : serverInstance->matchingThreads) { // Wait for all matching threads to finish their work
+            if (t.joinable()) {
+                t.join();
+            }
+        }
         if (serverInstance->acceptor) {
             serverInstance->acceptor->close();
         }
@@ -363,14 +368,14 @@ void ServerMain::startMatching() {
             pendingProducts.pop_front();
         }
 
-        std::thread([this, product]() {
+        matchingThreads.emplace_back([this, product]() {
             std::string currentTimestamp = getCurrentTimestamp();
             std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp, userStore);
             
             if (!matchedSales.empty()) {
                 std::cout << "Matching engine executed " << matchedSales.size() << " matches for " << product << " at " << currentTimestamp << std::endl;
             }
-        }).detach();
+        });
     }
 }
 

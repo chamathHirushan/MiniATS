@@ -37,4 +37,6 @@ class ServerMain {
         std::mutex matchingMutex;
         std::condition_variable matchingCV; // Condition variable for matching engine thread
         std::deque<std::string> pendingProducts; // pending products for matching
+
+        std::vector<std::thread> matchingThreads; // Store matching engine threads
 };
