@@ -363,12 +363,14 @@ void ServerMain::startMatching() {
             pendingProducts.pop_front();
         }
 
-        std::string currentTimestamp = getCurrentTimestamp();
-        std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp, userStore);
-        
-        if (!matchedSales.empty()) {
-            std::cout << "Matching engine executed " << matchedSales.size() << " matches for " << product << " at " << currentTimestamp << std::endl;
-        }
+        std::thread([this, product]() {
+            std::string currentTimestamp = getCurrentTimestamp();
+            std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp, userStore);
+            
+            if (!matchedSales.empty()) {
+                std::cout << "Matching engine executed " << matchedSales.size() << " matches for " << product << " at " << currentTimestamp << std::endl;
+            }
+        }).detach();
     }
 }
 
