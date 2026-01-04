@@ -293,10 +293,12 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                 std::ostringstream oss;
                 for (const auto& product : orderBook.getKnownProducts()) {
                     std::unordered_map<OrderBookType, std::vector<OrderBookEntry*>> productOrders = orderBook.getOrders(product);
-                    oss << "\n Product: " << product << "\t Best bid: "
-                        << OrderBook::getHighPrice(productOrders[OrderBookType::bid])
-                        << "\t Best ask: "
-                        << OrderBook::getLowPrice(productOrders[OrderBookType::ask]);
+                    if (!productOrders.empty()) {
+                        oss << "\n Product: " << product << "\t Best bid: "
+                            << OrderBook::getHighPrice(productOrders[OrderBookType::bid])
+                            << "\t Best ask: "
+                            << OrderBook::getLowPrice(productOrders[OrderBookType::ask]);
+                    }
                 }
                 response = oss.str();
             }
