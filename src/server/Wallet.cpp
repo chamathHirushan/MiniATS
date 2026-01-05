@@ -45,7 +45,11 @@ bool Wallet::containsAmmount(std::string type, double amount) {
     if (amount < 0) {
         throw std::invalid_argument("Amount cannot be negative");
     }
-    return currencies[type] >= amount;
+    auto it = currencies.find(type);
+    if (it != currencies.end()) {
+        return it->second >= amount;
+    }
+    return 0.0 >= amount;
 }
 
 std::string Wallet::toString() {
