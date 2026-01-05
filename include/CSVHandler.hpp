@@ -1,12 +1,14 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <list>
+#include <unordered_map>
 #include "OrderBookEntry.hpp"
 
 class CSVHandler {
     public:
         CSVHandler()= default;
-        static std::unordered_map<std::string, std::vector<OrderBookEntry>> readCSV(const std::string& filename);
+        static std::unordered_map<std::string, std::list<OrderBookEntry>> readCSV(const std::string& filename);
         static void entriesToCSV(const std::string& filename, const std::vector<OrderBookEntry>& entries, bool append=true);
         static std::vector<std::string> extractTokens(const std::string& csvLine, char separator);
 

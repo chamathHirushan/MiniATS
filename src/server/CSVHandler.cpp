@@ -51,8 +51,8 @@ OrderBookEntry CSVHandler::parseLine(const std::vector<std::string>& tokens) {
     return entry;
 }
 
-std::unordered_map<std::string, std::vector<OrderBookEntry>> CSVHandler::readCSV(const std::string& filename) {
-    std::unordered_map<std::string, std::vector<OrderBookEntry>> entries;
+std::unordered_map<std::string, std::list<OrderBookEntry>> CSVHandler::readCSV(const std::string& filename) {
+    std::unordered_map<std::string, std::list<OrderBookEntry>> entries;
     // Implementation for reading CSV file and populating entries
     std::ifstream csvFile{filename};
     std::string line;
@@ -70,7 +70,9 @@ std::unordered_map<std::string, std::vector<OrderBookEntry>> CSVHandler::readCSV
         }
     }
     csvFile.close();
-
+    for (auto& [product, product_orders] : entries) {
+        product_orders.sort(OrderBookEntry::compareByTimestamp);
+    }
     return entries;
 }
 

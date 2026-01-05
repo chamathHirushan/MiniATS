@@ -3,7 +3,25 @@
 #include "CSVHandler.hpp"
 #include <nlohmann/json.hpp>
 
+Wallet::Wallet(const Wallet& other) {
+    std::lock_guard<std::recursive_mutex> lock(other.mtx);
+    currencies = other.currencies;
+    locked = other.locked;
+}
+
+Wallet& Wallet::operator=(const Wallet& other) {
+    if (this != &other) {
+        std::unique_lock<std::recursive_mutex> lockSelf(mtx, std::defer_lock);
+        std::unique_lock<std::recursive_mutex> lockOther(other.mtx, std::defer_lock);
+        std::lock(lockSelf, lockOther);
+        currencies = other.currencies;
+        locked = other.locked;
+    }
+    return *this;
+}
+
 void Wallet::insertCurrency(std::string type, double amount) {
+    std::lock_guard<std::recursive_mutex> lock(mtx);
     if (amount < 0) {
         throw std::invalid_argument("Amount cannot be negative");
     }
@@ -11,6 +29,7 @@ void Wallet::insertCurrency(std::string type, double amount) {
 }
 
 bool Wallet::removeCurrency(std::string type, double amount) {
+    std::lock_guard<std::recursive_mutex> lock(mtx);
     if (amount < 0) {
         throw std::invalid_argument("Amount cannot be negative");
     }
@@ -22,13 +41,19 @@ bool Wallet::removeCurrency(std::string type, double amount) {
 }
 
 bool Wallet::containsAmmount(std::string type, double amount) {
+    std::lock_guard<std::recursive_mutex> lock(mtx);
     if (amount < 0) {
         throw std::invalid_argument("Amount cannot be negative");
     }
-    return currencies[type] >= amount;
+    auto it = currencies.find(type);
+    if (it != currencies.end()) {
+        return it->second >= amount;
+    }
+    return 0.0 >= amount;
 }
 
 std::string Wallet::toString() {
+    std::lock_guard<std::recursive_mutex> lock(mtx);
     std::string result = "Wallet contains:\n";
     if (currencies.empty()) {
         result += "     (empty)\n";
@@ -46,6 +71,7 @@ std::string Wallet::toString() {
 }
 
 bool Wallet::fulfillOrder(OrderBookEntry& order) {
+    std::lock_guard<std::recursive_mutex> lock(mtx);
     std::vector<std::string> tokens = CSVHandler::extractTokens(order.product, '/');
     if (tokens.size() != 2) {
         throw std::invalid_argument("Invalid product format in order");
@@ -61,6 +87,7 @@ bool Wallet::fulfillOrder(OrderBookEntry& order) {
 }
 
 bool Wallet::lockCurrency(const std::string& type, double amount) {
+    std::lock_guard<std::recursive_mutex> lock(mtx);
     if (containsAmmount(type, amount)) {
         currencies[type] -= amount;
         locked[type] += amount;
@@ -70,6 +97,7 @@ bool Wallet::lockCurrency(const std::string& type, double amount) {
 }
 
 bool Wallet::cancelOrder(OrderBookEntry& order) {
+    std::lock_guard<std::recursive_mutex> lock(mtx);
     std::vector<std::string> tokens = CSVHandler::extractTokens(order.product, '/');
     if (tokens.size() != 2) {
         throw std::invalid_argument("Invalid product format in order");
@@ -85,6 +113,7 @@ bool Wallet::cancelOrder(OrderBookEntry& order) {
 }
 
 bool Wallet::unlockCurrency(const std::string& type, double amount) {
+    std::lock_guard<std::recursive_mutex> lock(mtx);
     if (locked[type] >= amount) {
         locked[type] -= amount;
         currencies[type] += amount;
@@ -94,6 +123,7 @@ bool Wallet::unlockCurrency(const std::string& type, double amount) {
 }
 
 bool Wallet::spendLocked(const std::string& type, double amount) {
+    std::lock_guard<std::recursive_mutex> lock(mtx);
     if (locked[type] >= amount) {
         locked[type] -= amount;
         return true;

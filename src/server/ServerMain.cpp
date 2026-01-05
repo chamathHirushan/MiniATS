@@ -22,6 +22,12 @@ void ServerMain::cleanup(int signum) {
         std::cout << "Exported records successfully." << std::endl;
 
         serverInstance->isRunning = false;
+        serverInstance->matchingCV.notify_all();
+        for (auto& f : serverInstance->matchingFutures) { // Wait for all matching threads to finish their work
+            if (f.valid()) {
+                f.wait();
+            }
+        }
         if (serverInstance->acceptor) {
             serverInstance->acceptor->close();
         }
@@ -235,7 +241,7 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                             }
                         }
                         if (found) {
-                            bool success= orderBook.removeOrderById(orderId);
+                            bool success= orderBook.removeOrderById(username, orderId);
                             if (success)
                                 response = "OK Order cancelled.";
                             else
@@ -288,10 +294,12 @@ void ServerMain::handleClient(std::shared_ptr<tcp::socket> clientSocket) {
                 std::ostringstream oss;
                 for (const auto& product : orderBook.getKnownProducts()) {
                     std::unordered_map<OrderBookType, std::vector<OrderBookEntry*>> productOrders = orderBook.getOrders(product);
-                    oss << "\n Product: " << product << "\t Best bid: "
-                        << OrderBook::getHighPrice(productOrders[OrderBookType::bid])
-                        << "\t Best ask: "
-                        << OrderBook::getLowPrice(productOrders[OrderBookType::ask]);
+                    if (!productOrders.empty()) {
+                        oss << "\n Product: " << product << "\t Best bid: "
+                            << OrderBook::getHighPrice(productOrders[OrderBookType::bid])
+                            << "\t Best ask: "
+                            << OrderBook::getLowPrice(productOrders[OrderBookType::ask]);
+                    }
                 }
                 response = oss.str();
             }
@@ -363,14 +371,24 @@ void ServerMain::startMatching() {
             pendingProducts.pop_front();
         }
 
-        std::thread([this, product]() {
+        // Remove tasks that are already finished
+        matchingFutures.erase(
+            std::remove_if(matchingFutures.begin(), matchingFutures.end(),
+                [](std::future<void>& f) {
+                    return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+                }),
+            matchingFutures.end()
+        );
+
+        // Add the new task
+        matchingFutures.push_back(std::async(std::launch::async, [this, product]() {
             std::string currentTimestamp = getCurrentTimestamp();
             std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp, userStore);
             
             if (!matchedSales.empty()) {
                 std::cout << "Matching engine executed " << matchedSales.size() << " matches for " << product << " at " << currentTimestamp << std::endl;
             }
-        }).detach();
+        }));
     }
 }
 

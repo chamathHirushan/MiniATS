@@ -1,6 +1,7 @@
 #pragma once
 #include "OrderBookEntry.hpp"
 #include <vector>
+#include <list>
 #include <string>
 #include <mutex>
 #include "User.hpp"
@@ -38,7 +39,7 @@ class OrderBook {
         void insertSales(std::vector<OrderBookEntry>& sales);
         std::vector<OrderBookEntry> getSales();
         /** remove an order by its unique ID */
-        bool removeOrderById(std::size_t id);
+        bool removeOrderById(std::string username, std::size_t id);
         
         /** match asks to bids and return a list of sales */
         std::vector<OrderBookEntry> matchAsksToBids(std::string product, std::string currentTimestamp, UserStore& userStore);
@@ -49,8 +50,9 @@ class OrderBook {
     private:
         std::string filename;
         std::vector<OrderBookEntry> finalizedSales;
-        //std::vector<OrderBookEntry> orders;
-        std::unordered_map<std::string, std::vector<OrderBookEntry>> orderMap;
+        std::unordered_map<std::string, std::list<OrderBookEntry>> orderMap;
+
+        std::unordered_map<std::string, std::vector<OrderBookEntry*>> userOrders; // for fast user lookups
 
         mutable std::recursive_mutex ordersMutex; // Mutex lock to protect the orders,finalizedSales when multiple threads access
 
@@ -58,4 +60,6 @@ class OrderBook {
         void processSale(User& buyer, User& seller, const OrderBookEntry& sale, double bid_price, double ask_price);
         /** Remove matched orders from the order book */
         void removeMatchedOrders(const std::string& product);
+        /** Removes an order from the userOrders map safely */
+        void removeFromUserIndex(const std::string& username, std::size_t orderId);
 };
