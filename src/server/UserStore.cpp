@@ -9,18 +9,22 @@ UserStore::UserStore(const std::string& filename) {
 }
 
 bool UserStore::userExists(const std::string& username) {
+    std::lock_guard<std::mutex> lock(mtx);
     return users.find(username) != users.end();
 }
 
 void UserStore::addUser(const std::string& username, const std::string& password) {
+    std::lock_guard<std::mutex> lock(mtx);
     users.emplace(username, User(username, password));
 }
 
 bool UserStore::removeUser(const std::string& username) {
+    std::lock_guard<std::mutex> lock(mtx);
     return users.erase(username) > 0;
 }
 
 User& UserStore::getUser(const std::string& username) {
+    std::lock_guard<std::mutex> lock(mtx);
     auto it = users.find(username);
     if (it != users.end()) {
         return it->second;
@@ -33,6 +37,7 @@ User& UserStore::getUser(const std::string& username) {
 }
 
 void UserStore::save() {
+    std::lock_guard<std::mutex> lock(mtx);
     std::ofstream outFile(filename);
     if (outFile.is_open()) {
         nlohmann::json j = users;
@@ -45,6 +50,7 @@ void UserStore::save() {
 }
 
 void UserStore::load() {
+    std::lock_guard<std::mutex> lock(mtx);
     std::ifstream inFile(filename);
     if (inFile.is_open()) {
         try {

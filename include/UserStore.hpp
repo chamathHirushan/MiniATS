@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <unordered_map>
+#include <mutex>
 #include "User.hpp"
 
 class UserStore {
@@ -18,4 +19,5 @@ class UserStore {
     private:
         std::string filename;
         std::unordered_map<std::string, User> users;
+        mutable std::mutex mtx;
 };

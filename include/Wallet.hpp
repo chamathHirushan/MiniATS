@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <map>
+#include <mutex>
 #include "OrderBookEntry.hpp"
 
 class Wallet{
@@ -27,6 +28,7 @@ class Wallet{
     private:
         std::map<std::string, double> currencies;
         std::map<std::string, double> locked;
+        mutable std::recursive_mutex mtx;
 
         /** Locks a specified amount of a given currency type in the wallet */
         bool lockCurrency(const std::string& type, double amount);
