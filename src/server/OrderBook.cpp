@@ -126,11 +126,11 @@ void OrderBook::insertOrder(const OrderBookEntry& order) {
 
     // 2. SLOW PATH: The order is "late" (older timestamp).
     // Scan the list to find where it belongs.
-    auto it = orderList.begin();
-    while (it != orderList.end() && it->timestamp <= order.timestamp) {
+    auto it = orderList.rbegin();
+    while (it != orderList.rend() && it->timestamp > order.timestamp) {
         ++it;
     }
-    auto newIt = orderList.insert(it, order);
+    auto newIt = orderList.insert(it.base(), order);
     userOrders[order.username].push_back(&(*newIt));
 }
 

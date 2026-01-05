@@ -22,6 +22,7 @@ void ServerMain::cleanup(int signum) {
         std::cout << "Exported records successfully." << std::endl;
 
         serverInstance->isRunning = false;
+        serverInstance->matchingCV.notify_all();
         for (std::thread& t : serverInstance->matchingThreads) { // Wait for all matching threads to finish their work
             if (t.joinable()) {
                 t.join();
