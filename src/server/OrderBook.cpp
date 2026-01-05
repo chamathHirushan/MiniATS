@@ -184,12 +184,13 @@ bool OrderBook::removeOrderById(std::string username, std::size_t id){
         return false;
     }
 
-    OrderBookEntry* ptr = *vecIt;
-    std::string product = ptr->product;
+    // Get the Product Name
+    std::string product = (*vecIt)->product;
 
-    // straight to the correct product list
-    if (orderMap.count(product)) {
-        auto& orders = orderMap[product];
+    // delete the real object
+    auto mapIt = orderMap.find(product);
+    if (mapIt != orderMap.end()) {
+        auto& orders = mapIt->second;
         
         auto listIt = std::find_if(orders.begin(), orders.end(),
              [id](const OrderBookEntry& entry) { 
@@ -198,14 +199,15 @@ bool OrderBook::removeOrderById(std::string username, std::size_t id){
         
         if (listIt != orders.end()) {
             orders.erase(listIt);
+            userVec.erase(vecIt);
+            if (userVec.empty()) {
+                userOrders.erase(userIt);
+            }
+
+            return true;
         }
     }
-    userVec.erase(vecIt);
-    if (userVec.empty()) {
-        userOrders.erase(username);
-    }
-
-    return true;
+    return false;
 }
 
 std::string OrderBook::getFilename() const {
