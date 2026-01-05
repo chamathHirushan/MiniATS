@@ -9,6 +9,7 @@
 #include <map>
 #include <mutex>
 #include <condition_variable>
+#include <future>
 
 using asio::ip::tcp;
 
@@ -38,5 +39,5 @@ class ServerMain {
         std::condition_variable matchingCV; // Condition variable for matching engine thread
         std::deque<std::string> pendingProducts; // pending products for matching
 
-        std::vector<std::thread> matchingThreads; // Store matching engine threads
+        std::vector<std::future<void>> matchingFutures; // Store matching engine threads
 };

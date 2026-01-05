@@ -3,6 +3,23 @@
 #include "CSVHandler.hpp"
 #include <nlohmann/json.hpp>
 
+Wallet::Wallet(const Wallet& other) {
+    std::lock_guard<std::recursive_mutex> lock(other.mtx);
+    currencies = other.currencies;
+    locked = other.locked;
+}
+
+Wallet& Wallet::operator=(const Wallet& other) {
+    if (this != &other) {
+        std::unique_lock<std::recursive_mutex> lockSelf(mtx, std::defer_lock);
+        std::unique_lock<std::recursive_mutex> lockOther(other.mtx, std::defer_lock);
+        std::lock(lockSelf, lockOther);
+        currencies = other.currencies;
+        locked = other.locked;
+    }
+    return *this;
+}
+
 void Wallet::insertCurrency(std::string type, double amount) {
     std::lock_guard<std::recursive_mutex> lock(mtx);
     if (amount < 0) {

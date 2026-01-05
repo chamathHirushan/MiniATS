@@ -23,9 +23,9 @@ void ServerMain::cleanup(int signum) {
 
         serverInstance->isRunning = false;
         serverInstance->matchingCV.notify_all();
-        for (std::thread& t : serverInstance->matchingThreads) { // Wait for all matching threads to finish their work
-            if (t.joinable()) {
-                t.join();
+        for (auto& f : serverInstance->matchingFutures) { // Wait for all matching threads to finish their work
+            if (f.valid()) {
+                f.wait();
             }
         }
         if (serverInstance->acceptor) {
@@ -371,14 +371,24 @@ void ServerMain::startMatching() {
             pendingProducts.pop_front();
         }
 
-        matchingThreads.emplace_back([this, product]() {
+        // Remove tasks that are already finished
+        matchingFutures.erase(
+            std::remove_if(matchingFutures.begin(), matchingFutures.end(),
+                [](std::future<void>& f) {
+                    return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+                }),
+            matchingFutures.end()
+        );
+
+        // Add the new task
+        matchingFutures.push_back(std::async(std::launch::async, [this, product]() {
             std::string currentTimestamp = getCurrentTimestamp();
             std::vector<OrderBookEntry> matchedSales = orderBook.matchAsksToBids(product, currentTimestamp, userStore);
             
             if (!matchedSales.empty()) {
                 std::cout << "Matching engine executed " << matchedSales.size() << " matches for " << product << " at " << currentTimestamp << std::endl;
             }
-        });
+        }));
     }
 }
 

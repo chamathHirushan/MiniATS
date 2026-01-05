@@ -315,9 +315,10 @@ void OrderBook::processSale(User& buyer, User& seller, const OrderBookEntry& sal
 
 void OrderBook::removeMatchedOrders(const std::string& product){
     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-    if (orderMap.find(product) == orderMap.end()) return;
+    auto map_it = orderMap.find(product);
+    if (map_it == orderMap.end()) return;
 
-    auto& orders = orderMap[product]; 
+    auto& orders = map_it->second;
     for (auto it = orders.begin(); it != orders.end(); ) {
         if (it->amount <= 0.0) {    // If the order is fully filled
             removeFromUserIndex(it->username, it->id);

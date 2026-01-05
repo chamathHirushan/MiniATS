@@ -7,6 +7,8 @@
 class Wallet{
     public:
         Wallet() = default;
+        Wallet(const Wallet& other); // Custom copy constructor for saving/loading
+        Wallet& operator=(const Wallet& other); // Custom copy assignment operator for saving/loading
         /** Inserts a specified amount of a given currency type into the wallet */
         void insertCurrency(std::string type, double amount);
         /** Removes a specified amount of a given currency type from the wallet */
