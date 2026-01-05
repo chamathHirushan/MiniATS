@@ -5,7 +5,15 @@
 A mini trading system that enables users to place BID and ASK orders through a client–server architecture, allowing multiple clients to trade concurrently. The system includes a price–time priority order matching engine that matches buy and sell orders efficiently, along with a wallet management system to handle user balances, funds reservation, and transaction settlements. At the end of each trading session, the system exports market data, including filled and remaining orders, enabling state persistence and reuse in subsequent sessions.
 
 ## Architecture
+
+Architecture for Real-Time Trading
+
 <img width="800" alt="diagram" src="https://github.com/user-attachments/assets/799bbf3a-fe5c-4a19-8ff2-513627c94344" />
+<br/>
+<br/>
+
+   OrderBook for Efficient Order Storage
+<img width="800" alt="diagram" src="https://github.com/user-attachments/assets/aafe2c31-057e-4a85-a1df-337b5d836a84" />
 
 ## Compilation
 
