@@ -8,7 +8,7 @@ SRC_DIR   := src
 
 # Detect OS for linking flags and executable extension
 ifeq ($(OS),Windows_NT)
-    LDFLAGS := -lws2_32
+    LDFLAGS := -lws2_32 -lmswsock
     EXE_EXT := .exe
     MKDIR_CMD := if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
     RMDIR_CMD := rmdir /s /q $(BUILD_DIR)

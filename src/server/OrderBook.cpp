@@ -85,29 +85,38 @@ double OrderBook::getTotalVolume(const std::vector<OrderBookEntry*>& orders) {
     return totalVolume;
 }
 
-// std::string OrderBook::getEarliestTimestamp() {
-//     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-//     if (orders.empty()) {
-//         return "";
-//     }
-//     std::string earliest = orders[0].timestamp;
-    
-//     for (const OrderBookEntry& e : orders) {
-//         if (e.timestamp < earliest) {
-//             earliest = e.timestamp;
-//         }
-//     }
-//     return earliest;
-// }
+std::string OrderBook::getEarliestTimestamp() {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
+    std::string earliest = "";
+    bool first = true;
+    for (const auto& pair : orderMap) {
+        for (const auto& entry : pair.second) {
+            if (first || entry.timestamp < earliest) {
+                earliest = entry.timestamp;
+                first = false;
+            }
+        }
+    }
+    return earliest;
+}
 
-// std::string OrderBook::getNextTimestamp(const std::string& timestamp) {
-//     std::lock_guard<std::recursive_mutex> lock(ordersMutex);
-//     std::string nextTimestamp = "";
-//     for (const OrderBookEntry& e : orders) {
-//         if (e.timestamp > timestamp) {
-//             if (nextTimestamp == "" || e.timestamp < nextTimestamp) {
-//                 nextTimestamp = e.timestamp;
-//             }
+std::string OrderBook::getNextTimestamp(const std::string& timestamp) {
+    std::lock_guard<std::recursive_mutex> lock(ordersMutex);
+    std::string nextTimestamp = "";
+    bool found = false;
+    for (const auto& pair : orderMap) {
+        for (const auto& entry : pair.second) {
+            if (entry.timestamp > timestamp) {
+                if (!found || entry.timestamp < nextTimestamp) {
+                    nextTimestamp = entry.timestamp;
+                    found = true;
+                }
+            }
+        }
+    }
+    if (!found) return nextTimestamp; // Empty or wrapped?
+    return nextTimestamp;
+}
 //         }
 //     }
 //     return nextTimestamp;
