@@ -132,6 +132,7 @@ bool Wallet::spendLocked(const std::string& type, double amount) {
 }
 
 void to_json(nlohmann::json& j, const Wallet& w) {
+    std::lock_guard<std::recursive_mutex> lock(w.mtx);
     j = nlohmann::json{
         {"currencies", w.currencies},
         {"locked", w.locked}
