@@ -24,6 +24,16 @@ make all
 ```
 Feel free to edit the `Makefile` to address any cross-platform issues.
 
+## Web Frontend
+
+This project also features a interactive web dashboard built with React and TypeScript.
+
+To launch the user interface:
+1. Ensure you are on the `feat/rest` branch.
+2. Navigate to the frontend directory: `cd frontend`
+3. Install dependencies: `npm install`
+4. Start the application: `npm run dev`
+
 ### Running the Server and Clients
 
 Start the server and any number of clients using the following commands:
