@@ -40,4 +40,7 @@ class ServerMain {
         std::deque<std::string> pendingProducts; // pending products for matching
 
         std::vector<std::future<void>> matchingFutures; // Store matching engine threads
+
+        void startRestServer(); // Method to start Crow REST API
+        std::thread restThread; // Thread to run the REST API
 };

@@ -6,6 +6,7 @@
 #include <ctime>
 #include <csignal>
 #include "CSVHandler.hpp"
+#include "CrowHelper.hpp"
 
 ServerMain* ServerMain::serverInstance = nullptr; // Global pointer to current instance
 
@@ -58,6 +59,11 @@ void ServerMain::init() {
     // starting the matching engine in a separate thread
     std::thread matchingEngine(&ServerMain::startMatching, this);
     matchingEngine.detach();
+
+    // Start REST API in a separate thread
+    std::cout << "Starting REST API..." << std::endl;
+    startRestServer();
+
     std::cout << "Server started." << std::endl;
     
     run();
@@ -408,3 +414,276 @@ std::string ServerMain::getCurrentTimestamp() {
     ts.pop_back();
     return ts;
 }
+
+void ServerMain::startRestServer() {
+    restThread = std::thread([this]() {
+        crow::App<CORS> app;
+
+        CROW_ROUTE(app, "/health")
+        ([](){
+            return "OK";
+        });
+
+        CROW_ROUTE(app, "/products")
+        ([this](){ // Capture this to access orderBook
+            std::vector<std::string> products = this->orderBook.getKnownProducts();
+            crow::json::wvalue x;
+            for(size_t i = 0; i < products.size(); i++) {
+                x[i] = products[i];
+            }
+            return x;
+        });
+
+        // Get orders for a specific product
+        CROW_ROUTE(app, "/orders")
+        ([this](const crow::request& req){
+            auto productVal = req.url_params.get("product");
+            if (!productVal) {
+                return crow::response(400, "Missing 'product' parameter");
+            }
+            std::string product(productVal);
+            
+            auto ordersMap = this->orderBook.getOrders(product);
+            
+            crow::json::wvalue res;
+            int idx = 0;
+            
+            auto addOrders = [&](const std::vector<OrderBookEntry*>& orders) {
+                for (const auto* order : orders) {
+                    res[idx]["id"] = order->id;
+                    res[idx]["price"] = order->price;
+                    res[idx]["amount"] = order->amount;
+                    res[idx]["timestamp"] = order->timestamp;
+                    res[idx]["product"] = order->product;
+                    res[idx]["type"] = OrderBookEntry::orderTypeToString(order->orderType);
+                    res[idx]["username"] = order->username;
+                    idx++;
+                }
+            };
+
+            if (ordersMap.count(OrderBookType::ask)) addOrders(ordersMap[OrderBookType::ask]);
+            if (ordersMap.count(OrderBookType::bid)) addOrders(ordersMap[OrderBookType::bid]);
+
+            return crow::response(res);
+        });
+
+        // Place an order
+        CROW_ROUTE(app, "/order").methods(crow::HTTPMethod::POST)
+        ([this](const crow::request& req){
+            auto x = crow::json::load(req.body);
+            if (!x) {
+                return crow::response(400, "Invalid JSON");
+            }
+
+            try {
+                std::string product = x["product"].s();
+                double price = x["price"].d();
+                double amount = x["amount"].d();
+                std::string typeStr = x["type"].s();
+                std::string username = x["username"].s();
+
+                OrderBookType type = OrderBookEntry::determineOrderType(typeStr);
+                
+                // Use getCurrentTimestamp() from ServerMain
+                OrderBookEntry entry(price, amount, this->getCurrentTimestamp(), product, type, username); 
+                
+                // Check wallet funds
+                if (!this->userStore.getUser(username).getWallet().fulfillOrder(entry)) {
+                   return crow::response(400, "Insufficient funds");
+                }
+
+                this->orderBook.insertOrder(entry);
+                this->startMatchingProduct(product);
+                
+                return crow::response(201, "Order created");
+            } catch (const std::exception& e) {
+                return crow::response(400, "Invalid order data");
+            }
+        });
+
+        // Register
+        CROW_ROUTE(app, "/register").methods(crow::HTTPMethod::POST)
+        ([this](const crow::request& req){
+            auto x = crow::json::load(req.body);
+            if (!x) return crow::response(400, "Invalid JSON");
+            
+            try {
+                std::string username = x["username"].s();
+                std::string password = x["password"].s();
+
+                if (this->userStore.userExists(username)) {
+                    return crow::response(400, "User already exists");
+                }
+                
+                this->userStore.addUser(username, password);
+                this->userStore.save();
+                return crow::response(201, "User registered");
+            } catch (...) {
+                return crow::response(500, "Internal error");
+            }
+        });
+
+        // Login
+        CROW_ROUTE(app, "/login").methods(crow::HTTPMethod::POST)
+        ([this](const crow::request& req){
+            auto x = crow::json::load(req.body);
+            if (!x) return crow::response(400, "Invalid JSON");
+
+            try {
+                std::string username = x["username"].s();
+                std::string password = x["password"].s();
+
+                if (!this->userStore.userExists(username)) {
+                    return crow::response(401, "User not found");
+                }
+                
+                User& user = this->userStore.getUser(username);
+                if (user.validatePassword(password)) {
+                     return crow::response(200, "OK");
+                } else {
+                     return crow::response(401, "Invalid password");
+                }
+            } catch (...) {
+                return crow::response(500, "Internal error");
+            }
+        });
+
+        // Get Wallet
+        CROW_ROUTE(app, "/wallet")
+        ([this](const crow::request& req){
+            auto u = req.url_params.get("username");
+            if (!u) return crow::response(400, "Missing username");
+            std::string username(u);
+
+            if (!this->userStore.userExists(username)) {
+                return crow::response(404, "User not found");
+            }
+
+            User& user = this->userStore.getUser(username);
+            nlohmann::json j;
+            to_json(j, user.getWallet());
+            
+            return crow::response(j.dump());
+        });
+
+        // Wallet Deposit
+        CROW_ROUTE(app, "/wallet/deposit").methods(crow::HTTPMethod::POST)
+        ([this](const crow::request& req){
+            auto x = crow::json::load(req.body);
+            if (!x) return crow::response(400, "Invalid JSON");
+            
+            try {
+                std::string username = x["username"].s();
+                std::string product = x["product"].s();
+                double amount = x["amount"].d();
+                
+                if (!this->userStore.userExists(username)) return crow::response(404, "User not found");
+
+                this->userStore.getUser(username).getWallet().insertCurrency(product, amount);
+                this->userStore.save(); // Check if save is thread-safe or needed
+                
+                return crow::response(200, "Deposit successful");
+            } catch (...) {
+                return crow::response(400, "Invalid data");
+            }
+        });
+
+        // Wallet Withdraw
+        CROW_ROUTE(app, "/wallet/withdraw").methods(crow::HTTPMethod::POST)
+        ([this](const crow::request& req){
+            auto x = crow::json::load(req.body);
+            if (!x) return crow::response(400, "Invalid JSON");
+            
+            try {
+                std::string username = x["username"].s();
+                std::string product = x["product"].s();
+                double amount = x["amount"].d();
+                
+                if (!this->userStore.userExists(username)) return crow::response(404, "User not found");
+
+                if (this->userStore.getUser(username).getWallet().removeCurrency(product, amount)) {
+                    this->userStore.save();
+                    return crow::response(200, "Withdraw successful");
+                } else {
+                    return crow::response(400, "Insufficient funds");
+                }
+            } catch (...) {
+                return crow::response(400, "Invalid data");
+            }
+        });
+
+        // Get User Orders
+        CROW_ROUTE(app, "/user/orders")
+        ([this](const crow::request& req){
+            auto u = req.url_params.get("username");
+            if (!u) return crow::response(400, "Missing username");
+            std::string username(u);
+
+            std::vector<OrderBookEntry> orders = this->orderBook.getOrdersForUser(username);
+            
+            std::vector<crow::json::wvalue> jsonOrders;
+            for (const auto& order : orders) {
+                crow::json::wvalue j;
+                j["id"] = order.id;
+                j["price"] = order.price;
+                j["amount"] = order.amount;
+                j["timestamp"] = order.timestamp;
+                j["product"] = order.product;
+                j["type"] = OrderBookEntry::orderTypeToString(order.orderType);
+                j["username"] = order.username;
+                jsonOrders.push_back(j);
+            }
+            crow::json::wvalue res = jsonOrders;
+            return crow::response(res);
+        });
+
+        // Cancel Order
+        CROW_ROUTE(app, "/order").methods(crow::HTTPMethod::DELETE)
+        ([this](const crow::request& req){
+            auto idVal = req.url_params.get("id");
+            auto userVal = req.url_params.get("username");
+            
+            if (!idVal || !userVal) return crow::response(400, "Missing id or username");
+            
+            int id = std::stoi(idVal);
+            std::string username(userVal);
+
+            // Find order to cancel (need to update wallet logic: return funds)
+            // Need to verify ownership and existing logic in ServerHandleClient
+            
+            std::vector<OrderBookEntry> orders = this->orderBook.getOrdersForUser(username);
+            bool found = false;
+            OrderBookEntry foundOrder(0,0,"","",OrderBookType::ask, "");
+
+            for (auto& order : orders) {
+                if (id == order.id) {
+                    found = true;
+                    foundOrder = order;
+                    break;
+                }
+            }
+
+            if (found) {
+                // Return funds
+                this->userStore.getUser(username).getWallet().cancelOrder(foundOrder);
+                
+                // Remove from OrderBook
+                bool success = this->orderBook.removeOrderById(username, id);
+                if (success) {
+                    return crow::response(200, "Order cancelled");
+                } else {
+                   return crow::response(404, "Order not found in book");
+                }
+            }
+             
+            return crow::response(404, "Order not found");
+        });
+
+        // app.loglevel(crow::LogLevel::Warning);
+        app.signal_clear(); // Don't handle signals, let the main server handle them
+        app.port(18080).multithreaded().run();
+    });
+    
+    restThread.detach();
+}
+
